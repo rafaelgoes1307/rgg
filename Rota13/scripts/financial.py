@@ -50,13 +50,13 @@ def valor_residual_padrao(prazo_meses: int, taxa_anual: float = TAXA_DEPRECIACAO
 MANUTENCAO_POR_CATEGORIA = {
     "hatch": 300.0, "sedan": 380.0, "suv": 450.0, "pickup": 550.0,
     "van": 700.0, "onibus": 1200.0, "caminhao": 900.0, "ambulancia": 900.0,
-    "nao_especificado": 400.0,
+    "hibrido": 420.0, "nao_especificado": 400.0,
 }
 
 PNEUS_POR_CATEGORIA = {
     "hatch": 60.0, "sedan": 70.0, "suv": 90.0, "pickup": 110.0,
     "van": 130.0, "onibus": 250.0, "caminhao": 200.0, "ambulancia": 130.0,
-    "nao_especificado": 80.0,
+    "hibrido": 80.0, "nao_especificado": 80.0,
 }
 
 

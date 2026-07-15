@@ -11,7 +11,7 @@ Este é o motor "defensável": determinístico, sem alucinação, 100% auditáve
 """
 import re
 
-from .citations import construir_indice_paginas, fonte_do_match
+from .citations import construir_indice_paginas, fonte_do_match, pagina_do_offset, trecho as _trecho
 
 CATEGORIAS_VEICULO = {
     "hatch": ["hatch", "popular", "compacto"],
@@ -22,6 +22,7 @@ CATEGORIAS_VEICULO = {
     "onibus": ["ônibus", "micro-ônibus", "microônibus"],
     "caminhao": ["caminhão", "caminhao", "basculante", "baú"],
     "ambulancia": ["ambulância", "ambulancia"],
+    "hibrido": ["híbrido", "hibrido", "hybrid", "hev", "phev"],
 }
 
 
@@ -36,20 +37,24 @@ def extract_orgao(texto: str, offsets: list):
     padroes = [
         r"PREFEITURA MUNICIPAL DE [A-ZÀ-Ú][A-ZÀ-Ú \-]+",
         r"MUNIC[IÍ]PIO DE [A-ZÀ-Ú][A-ZÀ-Ú \-]+",
-        r"GOVERNO DO ESTADO D[EO] [A-ZÀ-Ú][A-ZÀ-Ú \-]+",
-        r"SECRETARIA[A-ZÀ-Ú \-]+DE[A-ZÀ-Ú \-]+",
-        r"TRIBUNAL DE [A-ZÀ-Ú][A-ZÀ-Ú \-]+",
-        r"UNIVERSIDADE [A-ZÀ-Ú][A-ZÀ-Ú \-]+",
-        r"INSTITUTO FEDERAL [A-ZÀ-Ú][A-ZÀ-Ú \-]+",
-        r"MINIST[ÉE]RIO D[AO] [A-ZÀ-Ú][A-ZÀ-Ú \-]+",
-        r"C[ÂA]MARA MUNICIPAL DE [A-ZÀ-Ú][A-ZÀ-Ú \-]+",
+        r"GOVERNO DO ESTADO D[AEO][S]? [A-ZÀ-Ú][A-ZÀ-Ú \-]{1,50}",
+        r"SECRETARIA[A-ZÀ-Ú \-]{1,40}D[AEO][S]?[A-ZÀ-Ú \-]{1,50}",
+        r"TRIBUNAL DE [A-ZÀ-Ú][A-ZÀ-Ú \-]{1,50}",
+        r"UNIVERSIDADE [A-ZÀ-Ú][A-ZÀ-Ú \-]{1,50}",
+        r"INSTITUTO FEDERAL [A-ZÀ-Ú][A-ZÀ-Ú \-]{1,50}",
+        r"MINIST[ÉE]RIO D[AEO][S]? [A-ZÀ-Ú][A-ZÀ-Ú \-]{1,50}",
+        r"C[ÂA]MARA MUNICIPAL DE [A-ZÀ-Ú][A-ZÀ-Ú \-]{1,50}",
     ]
     texto_upper = texto.upper()
-    for p in padroes:
-        m = re.search(p, texto_upper)
-        if m:
-            valor = texto[m.start():m.end()].title().strip()
-            return valor, fonte_do_match(texto, offsets, m)
+    # Considera o casamento mais à esquerda (mais próximo do início do
+    # documento) entre TODOS os padrões, em vez de "primeiro padrão da lista
+    # que casar em qualquer lugar" — evita pegar um trecho garbled lá pela
+    # página 40 quando o cabeçalho real e limpo está na página 1-2.
+    candidatos = [m for p in padroes for m in [re.search(p, texto_upper)] if m]
+    if candidatos:
+        m = min(candidatos, key=lambda m: m.start())
+        valor = texto[m.start():m.end()].title().strip()
+        return valor, fonte_do_match(texto, offsets, m)
     return "Órgão não identificado", None
 
 
@@ -68,18 +73,44 @@ def extract_numero_processo(texto: str, offsets: list):
     return "Não identificado", None
 
 
+_OBJETO_STOP = (
+    r"(?:\n\s*\n|\d\.\d\s|CL[ÁA]USULA|VALOR ESTIMADO|DA DOTA[ÇC][ÃA]O|"
+    r"\n\s*DA\s+[A-ZÀ-Ú]{3,}[:\s])"
+)
+_OBJETO_VERBOS_TIPICOS = re.compile(
+    r"^\s*(LOCA[ÇC][ÃA]O|CONTRATA[ÇC][ÃA]O|AQUISI[ÇC][ÃA]O|PRESTA[ÇC][ÃA]O|FORNECIMENTO)",
+    re.IGNORECASE,
+)
+
+
 def extract_objeto(texto: str, offsets: list):
-    m = re.search(
-        r"OBJETO[:\s\-]+(.{40,900}?)"
-        r"(?:\n\s*\n|\d\.\d\s|CL[ÁA]USULA|VALOR ESTIMADO|DA DOTA[ÇC][ÃA]O|"
-        r"\n\s*DA\s+[A-ZÀ-Ú]{3,}[:\s])",
-        texto,
-        re.IGNORECASE | re.DOTALL,
+    # A palavra "objeto" costuma aparecer duas vezes perto uma da outra em
+    # editais formais: primeiro como rótulo de um campo de formulário
+    # ("Objeto da licitação/Codificação..."), depois como a frase real
+    # ("Objeto: Locação de..."). Por isso pegamos TODAS as ocorrências e
+    # preferimos a que começa com um verbo típico de objeto de licitação —
+    # nunca a primeira ocorrência cega da palavra.
+    # Cada ocorrência da palavra "OBJETO" (não só a primeira) é um ponto de
+    # partida candidato — a 2ª ocorrência normalmente fica dentro do trecho
+    # capturado pela 1ª, então isso não pode ser um único finditer global.
+    candidatos = []
+    for pos in re.finditer(r"OBJETO", texto, re.IGNORECASE):
+        m = re.match(r"OBJETO[:\s\-]+(.{40,900}?)" + _OBJETO_STOP, texto[pos.start():], re.IGNORECASE | re.DOTALL)
+        if m:
+            candidatos.append((pos.start(), m))
+    if not candidatos:
+        return "Objeto não identificado — revisar edital manualmente.", None
+
+    offset, m_local = next(
+        ((offset, m) for offset, m in candidatos if _OBJETO_VERBOS_TIPICOS.search(m.group(1))),
+        candidatos[0],
     )
-    if m:
-        objeto = re.sub(r"\s+", " ", m.group(1)).strip(" .:-")
-        return objeto[:700], fonte_do_match(texto, offsets, m)
-    return "Objeto não identificado — revisar edital manualmente.", None
+    inicio, fim = offset + m_local.start(), offset + m_local.end()
+    objeto = re.sub(r"\s+", " ", m_local.group(1)).strip(" .:-")
+    fonte = {"pagina": pagina_do_offset(offsets, inicio), "trecho": _trecho(texto, inicio, fim)}
+    return objeto[:700], fonte
+    objeto = re.sub(r"\s+", " ", m.group(1)).strip(" .:-")
+    return objeto[:700], fonte_do_match(texto, offsets, m)
 
 
 def extract_prazo_contratual_meses(texto: str, offsets: list):

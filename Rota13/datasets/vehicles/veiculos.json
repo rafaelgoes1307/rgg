@@ -304,5 +304,23 @@
     "fipe": 88000,
     "observacoes": "Picape leve alternativa à Strada em pregões de manutenção urbana.",
     "garantia": "3 anos ou 100.000 km (garantia de fábrica)"
+  },
+  {
+    "marca": "Toyota",
+    "modelo": "Corolla Altis Hybrid",
+    "categoria": "hibrido",
+    "ano": 2024,
+    "motor": "1.8 16V Flex + motor elétrico",
+    "combustivel": "Híbrido Flex",
+    "potencia": "122 cv (combinada)",
+    "torque": "16,3 kgfm",
+    "consumo": "19,5 km/l (cidade, sistema híbrido)",
+    "tanque": "43 L",
+    "porta_malas": "440 L",
+    "capacidade": "5 lugares",
+    "pneu": "205/55 R16",
+    "fipe": 175000,
+    "garantia": "3 anos, km ilimitado (bateria híbrida: 8 anos ou 160.000 km)",
+    "observacoes": "Veículo de representação híbrido, comum em contratos para autoridades/secretários."
   }
 ]

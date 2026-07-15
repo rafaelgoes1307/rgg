@@ -31,7 +31,7 @@ MAX_CHARS_EDITAL = 14000  # limite de contexto enviado ao modelo
 
 CATEGORIAS_VALIDAS = [
     "hatch", "sedan", "suv", "pickup", "van", "onibus", "caminhao",
-    "ambulancia", "nao_especificado",
+    "ambulancia", "hibrido", "nao_especificado",
 ]
 
 FERRAMENTAS = [
@@ -69,7 +69,7 @@ APENAS um JSON válido, sem nenhum texto antes ou depois, com esta estrutura exa
   "valor_estimado": {"valor": <número, em reais, sem R$ nem separador de milhar>, "pagina": <int>, "trecho": "..."},
   "lotes": [
     {"numero": <inteiro>, "descricao": "...", "quantidade": <inteiro>,
-     "categoria_veiculo": "hatch|sedan|suv|pickup|van|onibus|caminhao|ambulancia|nao_especificado",
+     "categoria_veiculo": "hatch|sedan|suv|pickup|van|onibus|caminhao|ambulancia|hibrido|nao_especificado",
      "pagina": <int>, "trecho": "..."}
   ],
   "riscos_juridicos_identificados": ["lista curta de riscos/cláusulas críticas, cada uma citando a página"]
