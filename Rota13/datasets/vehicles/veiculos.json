@@ -358,5 +358,23 @@
     "fipe": 215000,
     "garantia": "6 anos ou 150.000 km (veículo) / 8 anos ou 150.000 km (bateria)",
     "observacoes": "SUV híbrido plug-in — único no mercado brasileiro que bate exatamente com especificação de 223cv/40kgf.m combinados comum em editais de representação funcional."
+  },
+  {
+    "marca": "BYD",
+    "modelo": "King DM-i Premium",
+    "categoria": "hibrido_phev",
+    "ano": 2024,
+    "motor": "1.5 Flex + motor elétrico (PHEV DM-i)",
+    "combustivel": "Híbrido Plug-in",
+    "potencia": "173 cv (combinada)",
+    "torque": "26,5 kgfm (combinada)",
+    "consumo": "modo elétrico ~52 km de autonomia + modo híbrido eficiente",
+    "tanque": "48 L + bateria 8,3 kWh",
+    "porta_malas": "490 L",
+    "capacidade": "5 lugares",
+    "pneu": "205/55 R17",
+    "fipe": 155000,
+    "garantia": "6 anos ou 150.000 km (veículo) / 8 anos ou 150.000 km (bateria)",
+    "observacoes": "Sedan híbrido plug-in — melhor custo-benefício do mercado brasileiro para lotes que aceitam Sedan HEV/PHEV; bem mais barato que SUVs PHEV do mesmo segmento."
   }
 ]

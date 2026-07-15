@@ -70,6 +70,7 @@ def build_analise(arquivo_pdf: str, paginas: list, dados: dict, conn) -> dict:
         lote_resultado = {
             **lote,
             "veiculo_referencia": veiculo_ref,
+            "alternativas_veiculo": veh.alternativas_veiculo(conn, lote["categoria_veiculo"]),
             "financeiro": fin,
             "cenarios_receita": cenarios_receita,
             "alertas": _alertas_lote(lote, fin, prazo_meses),

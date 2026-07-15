@@ -741,6 +741,11 @@ _TEMPLATE = r"""<!DOCTYPE html>
           <label>Lote simulado</label>
           <select id="sim-lote">__LOTE_OPTIONS__</select>
         </div>
+        <div class="sim-field">
+          <label>Veículo de referência <span style="color:var(--warn)">confirme se bate com a especificação!</span></label>
+          <select id="sim-veiculo"></select>
+          <div id="sim-veiculo-info" style="font-size:11px;color:var(--text-dim);margin-top:4px"></div>
+        </div>
         <div class="sim-field"><label>Receita mensal (% da FIPE cheia) <span id="v-receitapct"></span></label>
           <input type="range" id="p-receitapct" min="0.02" max="0.12" step="0.001"></div>
         <div class="sim-field"><label>Desconto da montadora <span id="v-desconto"></span></label>
@@ -849,7 +854,7 @@ function irr(fluxos){
 
 function calcularLote(lote, params){
   const quantidade = Math.max(1, lote.quantidade);
-  const fipe = (lote.veiculo_referencia && lote.veiculo_referencia.fipe) || 80000;
+  const fipe = params.fipeOverride || (lote.veiculo_referencia && lote.veiculo_referencia.fipe) || 80000;
   const prazoMeses = ANALISE.simulacao_base.prazo_contratual_meses;
 
   const precoCompra = fipe * (1 - params.desconto);
@@ -915,6 +920,7 @@ function calcularLote(lote, params){
 
 const els = {
   lote: document.getElementById('sim-lote'),
+  veiculo: document.getElementById('sim-veiculo'), veiculoInfo: document.getElementById('sim-veiculo-info'),
   receitapct: document.getElementById('p-receitapct'), vReceitapct: document.getElementById('v-receitapct'),
   desconto: document.getElementById('p-desconto'), vDesconto: document.getElementById('v-desconto'),
   entrada: document.getElementById('p-entrada'), vEntrada: document.getElementById('v-entrada'),
@@ -954,8 +960,33 @@ function setSliders(p){
   els.custosop.value=p.custosop; els.residual.value=p.residual;
 }
 
+function popularVeiculos(lote){
+  const alternativas = lote.alternativas_veiculo && lote.alternativas_veiculo.length
+    ? lote.alternativas_veiculo : (lote.veiculo_referencia ? [lote.veiculo_referencia] : []);
+  els.veiculo.innerHTML = alternativas.map((v, i) =>
+    `<option value="${i}">${v.marca} ${v.modelo} — R$ ${Math.round(v.fipe).toLocaleString('pt-BR')}</option>`
+  ).join('');
+  els.veiculo.dataset.veiculos = JSON.stringify(alternativas);
+  els.veiculo.value = 0;
+  atualizarInfoVeiculo();
+}
+
+function veiculoSelecionado(){
+  const alternativas = JSON.parse(els.veiculo.dataset.veiculos || '[]');
+  return alternativas[parseInt(els.veiculo.value)] || null;
+}
+
+function atualizarInfoVeiculo(){
+  const v = veiculoSelecionado();
+  els.veiculoInfo.textContent = v
+    ? `${v.categoria} · ${v.potencia || '—'} · ${v.torque || '—'} · ${v.observacoes || ''}`
+    : '';
+}
+
 function lerParams(){
+  const v = veiculoSelecionado();
   return {
+    fipeOverride: v ? v.fipe : null,
     receitaPctFipe: parseFloat(els.receitapct.value),
     desconto: parseFloat(els.desconto.value), entrada: parseFloat(els.entrada.value),
     juros: parseFloat(els.juros.value), prazofin: parseInt(els.prazofin.value),
@@ -995,12 +1026,15 @@ function recalcular(){
 ['receitapct','desconto','entrada','juros','prazofin','seguro','manutencao','pneus','tributos','administracao','custosop','residual'].forEach(k=>{
   els[k].addEventListener('input', recalcular);
 });
+els.veiculo.addEventListener('change', () => { atualizarInfoVeiculo(); recalcular(); });
 els.lote.addEventListener('change', () => {
   const lote = LOTES.find(l => l.numero === parseInt(els.lote.value));
+  popularVeiculos(lote);
   setSliders(paramsParaLote(lote));
   recalcular();
 });
 
+popularVeiculos(LOTES[0]);
 setSliders(paramsParaLote(LOTES[0]));
 recalcular();
 </script>
