@@ -198,6 +198,8 @@ def _card_lote(lote: dict, prazo_meses: int) -> str:
         <div class="stat"><span class="stat-label">ROI (período)</span><span class="stat-value small">{roi_txt}</span></div>
         <div class="stat"><span class="stat-label">Payback</span><span class="stat-value small">{payback_txt}</span></div>
         <div class="stat"><span class="stat-label">TIR anual</span><span class="stat-value small">{tir_txt}</span></div>
+        <div class="stat"><span class="stat-label">Parcela financiamento/veíc.</span><span class="stat-value small">{_brl(fin["parcela_financiamento_unitaria"])}/mês</span></div>
+        <div class="stat"><span class="stat-label">Fluxo de caixa/veíc.</span><span class="stat-value small">{_brl(fin["fluxo_caixa_mensal_unitario"])}/mês</span></div>
       </div>
       <div class="bar-chart">{_svg_barras_lote(fin)}</div>
       {_tabela_cenarios(lote.get("cenarios_receita"))}

@@ -71,6 +71,15 @@ PNEUS_POR_CATEGORIA = {
 }
 
 
+def brl_curto(v) -> str:
+    """Formata valor em R$ para uso dentro de mensagens de aviso (não é o
+    formatador principal do Dashboard, só evita repetir essa lógica em avisos)."""
+    neg = v < 0
+    v = abs(v)
+    s = f"{v:,.2f}".replace(",", "§").replace(".", ",").replace("§", ".")
+    return f"{'-' if neg else ''}R$ {s}"
+
+
 def pmt(taxa, nper, pv):
     """Parcela (Tabela Price) para um financiamento pv, à taxa mensal, em nper meses."""
     if nper <= 0:
@@ -237,6 +246,15 @@ def compute_lote_financials(lote: dict, veiculo_ref: dict, prazo_meses: int,
     # valor residual líquido: o que sobra ao vender/devolver o veículo, depois de quitar o saldo do financiamento
     valor_residual_liquido_total = valor_residual_total - saldo_devedor_final_total
 
+    if lucro_operacional_total > 0 and fluxo_caixa_mensal < 0:
+        avisos.append(
+            f"Atenção: a DRE mostra lucro contábil positivo, mas o fluxo de caixa mensal é negativo "
+            f"({brl_curto(fluxo_caixa_mensal)}/mês por veículo: {brl_curto(fluxo_caixa_mensal/quantidade)}). "
+            f"Isso acontece quando a parcela do financiamento ({brl_curto(parcela_mensal_unit)}/mês/veículo) "
+            f"amortiza principal mais rápido do que o veículo deprecia na contabilidade — o negócio pode "
+            f"'dar lucro no papel' e ainda assim faltar caixa no dia a dia."
+        )
+
     payback_meses = None
     if capital_necessario <= 0:
         avisos.append("Payback não calculado: capital necessário é zero ou indisponível.")
@@ -302,7 +320,14 @@ def compute_lote_financials(lote: dict, veiculo_ref: dict, prazo_meses: int,
         "tir_mensal": tir_mensal,
         "tir_anual": tir_anual,
         "vpl": vpl,
+        # Números da "contraprova": por que o caixa pode divergir do lucro
+        # contábil (financiamento amortiza principal mais rápido/devagar do
+        # que o veículo deprecia) — mostrados explicitamente, não só embutidos
+        # na DRE, porque é exatamente o tipo de coisa que precisa ficar visível.
+        "parcela_financiamento_unitaria": round(parcela_mensal_unit, 2),
+        "custo_mensal_unitario_sem_financeiro": round(custo_operacional_mensal_unit_sem_financeiro, 2),
         "fluxo_caixa_mensal": round(fluxo_caixa_mensal, 2),
+        "fluxo_caixa_mensal_unitario": round(fluxo_caixa_mensal / quantidade, 2) if quantidade else None,
         "valor_residual_total": round(valor_residual_total, 2),
         "valor_residual_unitario": round(valor_residual_unit, 2),
         "valor_residual_liquido_total": round(valor_residual_liquido_total, 2),
