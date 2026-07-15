@@ -155,6 +155,23 @@ def _tabela_cenarios(cenarios: list) -> str:
     </div>'''
 
 
+def _premissas_calculo(fin: dict, prazo_meses: int) -> str:
+    p = fin["premissas"]
+    itens = [
+        ("Prazo contratual", f"{prazo_meses} meses"),
+        ("Preço de compra (com desconto)", _brl(fin["preco_compra_unitario"])),
+        ("Desconto da montadora", _pct(p["desconto_montadora"])),
+        ("Entrada", _pct(p["entrada_pct"])),
+        ("Prazo de financiamento", f"{fin['prazo_financiamento_meses_aplicado']} meses"),
+        ("Taxa de juros a.m.", _pct(p["taxa_juros_am"])),
+        ("Tributos sobre receita", _pct(p["tributos_pct"])),
+        ("Administração sobre receita", _pct(p["administracao_pct"])),
+        ("Valor residual ao final do contrato", _pct(p["valor_residual_pct_aplicado"])),
+    ]
+    linhas = "".join(f"<div><span>{label}</span><span>{valor}</span></div>" for label, valor in itens)
+    return f'<div class="premissas-calculo"><strong>Premissas usadas neste cálculo:</strong>{linhas}</div>'
+
+
 def _card_lote(lote: dict, prazo_meses: int) -> str:
     fin = lote["financeiro"]
     dp = lote["decisao_participar"]
@@ -202,6 +219,11 @@ def _card_lote(lote: dict, prazo_meses: int) -> str:
         <div class="stat"><span class="stat-label">Fluxo de caixa/veíc.</span><span class="stat-value small">{_brl(fin["fluxo_caixa_mensal_unitario"])}/mês</span></div>
       </div>
       <div class="bar-chart">{_svg_barras_lote(fin)}</div>
+      <details class="fluxo-caixa-detalhe">
+        <summary>💵 Fluxo de caixa mensal — quanto sobra do aluguel depois dos custos</summary>
+        {_bloco_fluxo_caixa(fin["fluxo_caixa_mensal_detalhe"])}
+        {_premissas_calculo(fin, prazo_meses)}
+      </details>
       {_tabela_cenarios(lote.get("cenarios_receita"))}
       <div class="lote-lists">
         <div><strong>Por que "{dp["decisao"]}"?</strong><ul>{motivos_html}</ul></div>
@@ -253,6 +275,27 @@ def _bloco_dre(dre: dict) -> str:
     for chave, label in DRE_LABELS:
         destaque = chave == "lucro_operacional"
         linhas.append(_linha_dre(chave, label, dre[chave], destaque))
+    return "".join(linhas)
+
+
+FLUXO_CAIXA_LABELS = [
+    ("aluguel_bruto_mensal", "Aluguel Bruto Mensal (por veículo)"),
+    ("tributos", "(-) Tributos"),
+    ("seguro", "(-) Seguro"),
+    ("manutencao", "(-) Manutenção"),
+    ("pneus", "(-) Pneus"),
+    ("administracao", "(-) Administração"),
+    ("parcela_financiamento", "(-) Parcela do Financiamento"),
+    ("custos_operacionais", "(-) Custos Operacionais"),
+    ("fluxo_caixa_liquido", "= Fluxo de Caixa Líquido Mensal"),
+]
+
+
+def _bloco_fluxo_caixa(detalhe: dict) -> str:
+    linhas = []
+    for chave, label in FLUXO_CAIXA_LABELS:
+        destaque = chave == "fluxo_caixa_liquido"
+        linhas.append(_linha_dre(chave, label, detalhe[chave], destaque))
     return "".join(linhas)
 
 
@@ -537,6 +580,10 @@ _TEMPLATE = r"""<!DOCTYPE html>
   .sem-emoji{font-size:26px}
   .sem-label{font-weight:700;margin:4px 0}
   .sem-just{font-size:11px;color:var(--text-dim)}
+  .fluxo-caixa-detalhe{margin-top:12px;background:var(--bg-card-hover);border:1px solid var(--border);border-radius:10px;padding:10px 14px}
+  .fluxo-caixa-detalhe summary{cursor:pointer;font-size:13px;font-weight:600;padding:4px 0}
+  .fluxo-caixa-detalhe .premissas-calculo{margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);font-size:12px;color:var(--text-dim)}
+  .fluxo-caixa-detalhe .premissas-calculo div{display:flex;justify-content:space-between;padding:2px 0}
   .dre-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px}
   .dre-row:last-child{border-bottom:none}
   .dre-negativo span:last-child{color:var(--bad)}
@@ -643,6 +690,7 @@ _TEMPLATE = r"""<!DOCTYPE html>
 
 <section id="financeiro">
   <h2>💰 Financeiro — DRE Consolidada</h2>
+  <p style="color:var(--text-dim);font-size:13px;margin-top:-8px">Prazo contratual considerado em todos os cálculos: <strong style="color:var(--text)">__PRAZO__ meses</strong>. Prova de cálculo (premissas usadas) disponível dentro de cada lote, em "Fluxo de caixa mensal".</p>
   <div class="grid grid-2">
     <div class="card">
       <h3 style="margin-top:0">Demonstrativo de Resultado</h3>

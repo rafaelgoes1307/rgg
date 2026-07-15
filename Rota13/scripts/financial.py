@@ -246,6 +246,26 @@ def compute_lote_financials(lote: dict, veiculo_ref: dict, prazo_meses: int,
     # valor residual líquido: o que sobra ao vender/devolver o veículo, depois de quitar o saldo do financiamento
     valor_residual_liquido_total = valor_residual_total - saldo_devedor_final_total
 
+    # "DRE de caixa" mensal por veículo — mesma estrutura da DRE contábil,
+    # mas em base de caixa (parcela cheia, sem depreciação) e por unidade,
+    # para responder direto "quanto sobra do aluguel depois dos custos".
+    fluxo_caixa_mensal_detalhe = {
+        "aluguel_bruto_mensal": round(receita_mensal_unit, 2),
+        "tributos": round(-tributos_mensal_unit, 2),
+        "seguro": round(-seguro_mensal_unit, 2),
+        "manutencao": round(-manutencao_mensal_unit, 2),
+        "pneus": round(-pneus_mensal_unit, 2),
+        "administracao": round(-administracao_mensal_unit, 2),
+        "parcela_financiamento": round(-parcela_mensal_unit, 2),
+        "custos_operacionais": round(-custos_operacionais_mensal_unit, 2),
+        "fluxo_caixa_liquido": round(
+            receita_mensal_unit - tributos_mensal_unit - seguro_mensal_unit - manutencao_mensal_unit
+            - pneus_mensal_unit - administracao_mensal_unit - parcela_mensal_unit
+            - custos_operacionais_mensal_unit,
+            2,
+        ),
+    }
+
     if lucro_operacional_total > 0 and fluxo_caixa_mensal < 0:
         avisos.append(
             f"Atenção: a DRE mostra lucro contábil positivo, mas o fluxo de caixa mensal é negativo "
@@ -328,6 +348,7 @@ def compute_lote_financials(lote: dict, veiculo_ref: dict, prazo_meses: int,
         "custo_mensal_unitario_sem_financeiro": round(custo_operacional_mensal_unit_sem_financeiro, 2),
         "fluxo_caixa_mensal": round(fluxo_caixa_mensal, 2),
         "fluxo_caixa_mensal_unitario": round(fluxo_caixa_mensal / quantidade, 2) if quantidade else None,
+        "fluxo_caixa_mensal_detalhe": fluxo_caixa_mensal_detalhe,
         "valor_residual_total": round(valor_residual_total, 2),
         "valor_residual_unitario": round(valor_residual_unit, 2),
         "valor_residual_liquido_total": round(valor_residual_liquido_total, 2),
