@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+database/rota13.db
+output/

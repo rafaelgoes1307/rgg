@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rota13 — Tratante Descontará D — Pregão Eletrônico nº 068/2026</title>
+<style>
+  :root{
+    --bg:#0b0f14; --bg-card:#12181f; --bg-card-hover:#161e27; --border:#233040;
+    --text:#e6edf3; --text-dim:#8b98a5; --accent:#3b82f6;
+    --ok:#22c55e; --ok-bg:rgba(34,197,94,.12);
+    --warn:#f59e0b; --warn-bg:rgba(245,158,11,.12);
+    --bad:#ef4444; --bad-bg:rgba(239,68,68,.12);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.5}
+  header.topbar{padding:20px 28px;border-bottom:1px solid var(--border);
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;
+    position:sticky;top:0;background:rgba(11,15,20,.92);backdrop-filter:blur(6px);z-index:10}
+  header.topbar h1{font-size:18px;margin:0;font-weight:600}
+  header.topbar .brand{color:var(--accent);font-weight:800;letter-spacing:.5px}
+  nav.tabs{display:flex;gap:4px;padding:0 28px;border-bottom:1px solid var(--border);
+    overflow-x:auto;background:var(--bg)}
+  nav.tabs a{padding:12px 16px;color:var(--text-dim);text-decoration:none;font-size:14px;
+    border-bottom:2px solid transparent;white-space:nowrap}
+  nav.tabs a:hover{color:var(--text)}
+  main{max-width:1300px;margin:0 auto;padding:24px 28px 80px}
+  section{margin-bottom:48px;scroll-margin-top:110px}
+  section h2{font-size:20px;margin:0 0 16px;display:flex;align-items:center;gap:8px}
+  .grid{display:grid;gap:16px}
+  .grid-2{grid-template-columns:repeat(auto-fit,minmax(420px,1fr))}
+  .grid-3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .grid-4{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+  .card{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px}
+  .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px}
+  .card-header h3{margin:0;font-size:16px;display:flex;align-items:center;gap:8px}
+  .lote-score{font-size:11px;color:var(--text-dim);font-weight:400}
+  .badge{padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+  .badge.ok{background:var(--ok-bg);color:var(--ok)}
+  .badge.warn{background:var(--warn-bg);color:var(--warn)}
+  .badge.bad{background:var(--bad-bg);color:var(--bad)}
+  .chip{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;margin:2px;background:var(--border);color:var(--text-dim)}
+  .chip.ok{background:var(--ok-bg);color:var(--ok)}
+  .chip.warn{background:var(--warn-bg);color:var(--warn)}
+  .chip.bad{background:var(--bad-bg);color:var(--bad)}
+  .resumo-top{display:grid;grid-template-columns:220px 1fr;gap:24px;align-items:center}
+  @media(max-width:700px){.resumo-top{grid-template-columns:1fr}}
+  .gauge{display:block;margin:0 auto}
+  .gauge-track{fill:none;stroke:var(--border);stroke-width:10}
+  .gauge-fill{fill:none;stroke-width:10;stroke-linecap:round;transform:rotate(-90deg);
+    transform-origin:70px 70px;transition:stroke-dashoffset .6s ease}
+  .gauge-ok{stroke:var(--ok)} .gauge-warn{stroke:var(--warn)} .gauge-bad{stroke:var(--bad)}
+  .gauge-score{font-size:30px;font-weight:800;fill:var(--text);text-anchor:middle}
+  .gauge-label{font-size:11px;fill:var(--text-dim);text-anchor:middle}
+  .go-badge{display:inline-block;font-size:20px;font-weight:800;padding:8px 22px;border-radius:10px;margin-bottom:10px}
+  .go-badge.ok{background:var(--ok-bg);color:var(--ok)}
+  .go-badge.warn{background:var(--warn-bg);color:var(--warn)}
+  .go-badge.bad{background:var(--bad-bg);color:var(--bad)}
+  .resumo-stats{display:flex;flex-wrap:wrap;gap:22px;margin-top:14px}
+  .resumo-stats .stat{min-width:140px}
+  .stat-label{display:block;font-size:12px;color:var(--text-dim);margin-bottom:2px}
+  .stat-value{display:block;font-size:17px;font-weight:700}
+  .stat-value.small{font-size:13px;font-weight:600}
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+  ul{margin:6px 0 0;padding-left:18px}
+  li{margin-bottom:4px;font-size:14px}
+  .obj-box{color:var(--text-dim);font-size:14px;margin-top:6px}
+  .lote-card .lote-desc{color:var(--text-dim);font-size:13px;margin:6px 0}
+  .lote-meta{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--text-dim);margin-bottom:8px}
+  .bar-chart{margin-top:10px}
+  .bar-row{display:grid;grid-template-columns:60px 1fr 110px;align-items:center;gap:8px;margin-bottom:6px;font-size:12px}
+  .bar-track{background:var(--border);border-radius:6px;height:10px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:6px}
+  .bar-fill.ok{background:var(--ok)} .bar-fill.warn{background:var(--warn)} .bar-fill.bad{background:var(--bad)}
+  .lote-lists{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;font-size:13px}
+  @media(max-width:600px){.lote-lists{grid-template-columns:1fr}}
+  .doc-card{background:var(--bg-card-hover);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px}
+  .doc-card h4{margin:0 0 6px;font-size:14px}
+  .doc-card p{margin:4px 0;font-size:13px;color:var(--text-dim)}
+  .doc-tema{color:var(--accent) !important}
+  .doc-fonte{font-size:11px !important;opacity:.8;font-style:italic}
+  .checklist-item{list-style:none;margin-left:-18px}
+  .checklist-item label{display:flex;gap:8px;align-items:flex-start;cursor:pointer;font-size:14px}
+  .checklist-item input{margin-top:3px}
+  .cat-row{margin-bottom:14px}
+  .cat-row-top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px}
+  .cat-motivo{font-size:12px;color:var(--text-dim);margin-top:4px}
+  .sem-panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+  .sem-item{background:var(--bg-card-hover);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+  .sem-emoji{font-size:26px}
+  .sem-label{font-weight:700;margin:4px 0}
+  .sem-just{font-size:11px;color:var(--text-dim)}
+  .dre-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px}
+  .dre-row:last-child{border-bottom:none}
+  .dre-negativo span:last-child{color:var(--bad)}
+  .dre-destaque{font-weight:800;font-size:16px;border-top:2px solid var(--border);margin-top:6px;padding-top:12px}
+  .tl-item{display:flex;gap:12px;padding:10px 0}
+  .tl-dot{width:12px;height:12px;border-radius:50%;margin-top:4px;flex-shrink:0}
+  .tl-dot.ok{background:var(--ok)} .tl-dot.muted{background:var(--border)}
+  .tl-info{font-size:12px;color:var(--text-dim)}
+  .sim-grid{display:grid;grid-template-columns:340px 1fr;gap:20px}
+  @media(max-width:900px){.sim-grid{grid-template-columns:1fr}}
+  .sim-field{margin-bottom:14px}
+  .sim-field label{display:flex;justify-content:space-between;font-size:13px;color:var(--text-dim);margin-bottom:4px}
+  .sim-field input[type=range]{width:100%}
+  .sim-field select{width:100%;padding:8px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px}
+  .sim-result-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+  .sim-result{background:var(--bg-card-hover);border:1px solid var(--border);border-radius:10px;padding:14px}
+  .sim-result .stat-value{font-size:18px}
+  .market-card{text-align:center;padding:40px 20px;color:var(--text-dim)}
+  .market-card .lock{font-size:36px;margin-bottom:10px}
+  .confianca-row{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap}
+  footer{text-align:center;color:var(--text-dim);font-size:12px;padding:30px 0}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <h1><span class="brand">ROTA13</span> Bid Intelligence — Painel de Decisão</h1>
+  <div style="font-size:13px;color:var(--text-dim)">Tratante Descontará D · Pregão Eletrônico nº 068/2026</div>
+</header>
+
+<nav class="tabs">
+  <a href="#resumo">Resumo</a>
+  <a href="#lotes">Lotes</a>
+  <a href="#financeiro">Financeiro (DRE)</a>
+  <a href="#juridico">Jurídico</a>
+  <a href="#operacional">Operacional</a>
+  <a href="#checklist">O que fazer</a>
+  <a href="#timeline">Timeline</a>
+  <a href="#simulacao">Simulação</a>
+  <a href="#mercado">Mercado</a>
+</nav>
+
+<main>
+
+<section id="resumo">
+  <h2>📊 Resumo Executivo</h2>
+  <div class="card resumo-top">
+    <div><svg width="140" height="140" viewBox="0 0 140 140" class="gauge">
+      <circle cx="70" cy="70" r="54" class="gauge-track"/>
+      <circle cx="70" cy="70" r="54" class="gauge-fill gauge-warn"
+        stroke-dasharray="339.3" stroke-dashoffset="115.4"/>
+      <text x="70" y="64" class="gauge-score">66</text>
+      <text x="70" y="86" class="gauge-label">/ 100</text>
+    </svg></div>
+    <div>
+      <span class="go-badge warn">GO COM RESSALVAS</span>
+      <ul><li>Riscos abaixo do esperado (0/10 pontos).</li></ul>
+      <div class="obj-box"><strong>Objeto:</strong> da licitação/Codificação no Certificado de Registro – SAEB: Objeto: Locação de Veículos Híbridos de Representação Funcional para Secretários, Equivalentes e Outras Autoridades do Governo, para atendimento às Unidades da Administração Pública Estadual. Família: Vide item 1</div>
+      <div class="resumo-stats">
+        <div class="stat"><span class="stat-label">Prazo contratual</span><span class="stat-value">32 meses</span></div>
+        <div class="stat"><span class="stat-label">Valor estimado</span><span class="stat-value">R$ 26.301.221,76 (estimado — não explícito no edital)</span></div>
+        <div class="stat"><span class="stat-label">Lotes</span><span class="stat-value">5</span></div>
+        <div class="stat"><span class="stat-label">Itens (veículos)</span><span class="stat-value">235</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3 style="margin-top:0">Score por categoria</h3>
+    <div class="cat-row">
+      <div class="cat-row-top"><span>Financeiro (40)</span><span>24/40</span></div>
+      <div class="bar-track"><div class="bar-fill warn" style="width:60%"></div></div>
+      <div class="cat-motivo">Margem operacional de 17.9% (12/20 pontos).</div>
+    </div><div class="cat-row">
+      <div class="cat-row-top"><span>Jurídico (20)</span><span>14/20</span></div>
+      <div class="bar-track"><div class="bar-fill ok" style="width:70%"></div></div>
+      <div class="cat-motivo">0 risco(s) de severidade alta e 2 de severidade média identificados.</div>
+    </div><div class="cat-row">
+      <div class="cat-row-top"><span>Operacional (20)</span><span>18/20</span></div>
+      <div class="bar-track"><div class="bar-fill ok" style="width:90%"></div></div>
+      <div class="cat-motivo">1 de 5 lote(s) sem categoria de veículo identificada automaticamente.</div>
+    </div><div class="cat-row">
+      <div class="cat-row-top"><span>Documentação (10)</span><span>10/10</span></div>
+      <div class="bar-track"><div class="bar-fill ok" style="width:100%"></div></div>
+      <div class="cat-motivo">Todos os campos-chave do edital foram identificados no documento.</div>
+    </div><div class="cat-row">
+      <div class="cat-row-top"><span>Riscos (10)</span><span>0/10</span></div>
+      <div class="bar-track"><div class="bar-fill bad" style="width:0%"></div></div>
+      <div class="cat-motivo">13 alerta(s) identificado(s) somando todos os lotes.</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3 style="margin-top:0">Semáforo</h3>
+    <div class="sem-panel"><div class="sem-item">
+          <div class="sem-emoji">🟡</div>
+          <div class="sem-label">Financeiro</div>
+          <div class="sem-just">Margem operacional de 17.9% (12/20 pontos).</div>
+        </div><div class="sem-item">
+          <div class="sem-emoji">🟢</div>
+          <div class="sem-label">Jurídico</div>
+          <div class="sem-just">0 risco(s) de severidade alta e 2 de severidade média identificados.</div>
+        </div><div class="sem-item">
+          <div class="sem-emoji">🟢</div>
+          <div class="sem-label">Operacional</div>
+          <div class="sem-just">1 de 5 lote(s) sem categoria de veículo identificada automaticamente.</div>
+        </div><div class="sem-item">
+          <div class="sem-emoji">🟡</div>
+          <div class="sem-label">Entrega</div>
+          <div class="sem-just">Prazo de entrega não identificado no texto — confirmar diretamente no edital.</div>
+        </div><div class="sem-item">
+          <div class="sem-emoji">🟢</div>
+          <div class="sem-label">Documentação</div>
+          <div class="sem-just">Todos os campos-chave do edital foram identificados no documento.</div>
+        </div></div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3 style="margin-top:0">Confiança da extração</h3>
+    <div class="confianca-row">
+      <span class="badge ok">95%</span>
+      <span style="font-size:12px;color:var(--text-dim)">Motor: Regex (determinístico)</span>
+    </div>
+    <div style="margin-top:10px"><strong style="font-size:12px">Encontrados:</strong><br><span class="chip ok">Órgão licitante</span><span class="chip ok">Número do processo/pregão</span><span class="chip ok">Objeto do edital</span><span class="chip ok">Prazo contratual</span><span class="chip ok">Valor estimado</span></div>
+    <div style="margin-top:8px"><strong style="font-size:12px">Pendentes:</strong><br><span class='chip'>Nenhum</span></div>
+    <div style="margin-top:8px"><strong style="font-size:12px">Revisar manualmente:</strong><br><span class="chip warn">Valor estimado (não veio de um rótulo explícito no texto)</span></div>
+  </div>
+
+  <div class="grid grid-2" style="margin-top:16px">
+    <div class="card"><h3 style="margin-top:0">✅ Pontos fortes</h3><ul><li>Margem operacional saudável (17.9%).</li></ul></div>
+    <div class="card"><h3 style="margin-top:0">⚠️ Pontos fracos</h3><ul><li>Payback longo, 60.6 meses.</li></ul></div>
+    <div class="card"><h3 style="margin-top:0">🚩 Riscos</h3><ul><li>Riscos jurídicos relevantes identificados — ver seção Jurídico.</li></ul></div>
+    <div class="card"><h3 style="margin-top:0">💡 Oportunidades</h3><ul><li>Avaliar cada lote individualmente na seção Análise por Lote.</li></ul></div>
+  </div>
+  <div class="grid grid-2" style="margin-top:16px">
+    <div class="card"><h3 style="margin-top:0">Decisões necessárias</h3><ul><li>Confirmar premissas financeiras (desconto de montadora, taxa de juros) com fornecedores reais antes de propor preço.</li><li>Avaliar se as ressalvas identificadas inviabilizam a participação.</li></ul></div>
+    <div class="card"><h3 style="margin-top:0">Ações recomendadas</h3><ul><li>Revisar o checklist prático (seção "O que preciso fazer") antes da sessão pública.</li><li>Considerar pedido de esclarecimento sobre os pontos jurídicos levantados.</li></ul></div>
+  </div>
+</section>
+
+<section id="lotes">
+  <h2>📦 Análise por Lote</h2>
+  <div class="grid grid-2">
+    
+    <div class="card lote-card">
+      <div class="card-header">
+        <h3>🔴 Lote 9 <span class="lote-score">Score 28/100</span></h3>
+        <span class="badge bad">Participar? NÃO</span>
+      </div>
+      <p class="lote-desc">. Ordem de fases da licitação:</p>
+      <div class="lote-meta">
+        <span>🚗 1 veículo(s)</span>
+        <span>🏷️ Van/Furgão</span>
+        <span>📋 Ref.: Fiat Fiorino Furgão 1.4</span>
+        <span class="badge bad">Risco Alto</span>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><span class="stat-label">Capital necessário</span><span class="stat-value">R$ 14.760,00</span></div>
+        <div class="stat"><span class="stat-label">Receita bruta</span><span class="stat-value">R$ 111.920,09</span></div>
+        <div class="stat"><span class="stat-label">Margem operacional</span><span class="stat-value small">11,7%</span></div>
+        <div class="stat"><span class="stat-label">ROI (período)</span><span class="stat-value small">88,5%</span></div>
+        <div class="stat"><span class="stat-label">Payback</span><span class="stat-value small">105,3 meses</span></div>
+        <div class="stat"><span class="stat-label">TIR anual</span><span class="stat-value small">30,1%</span></div>
+      </div>
+      <div class="bar-chart">
+        <div class="bar-row">
+          <span class="bar-label">Capital</span>
+          <div class="bar-track"><div class="bar-fill" style="width:13.2%;background:#3b82f6"></div></div>
+          <span class="bar-value">R$ 14.760,00</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Receita</span>
+          <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#22c55e"></div></div>
+          <span class="bar-value">R$ 111.920,09</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Custo</span>
+          <div class="bar-track"><div class="bar-fill" style="width:88.3%;background:#ef4444"></div></div>
+          <span class="bar-value">R$ 98.856,12</span>
+        </div></div>
+      <div class="lote-lists">
+        <div><strong>Por que "NÃO"?</strong><ul><li>Margem de 11.7% com risco Alto — pouco atrativo nas premissas atuais.</li><li>3 alerta(s) identificado(s) neste lote.</li></ul></div>
+        <div><strong>Alertas</strong><ul><li>⚠️ Receita estimada com base em referência de mercado (não foi encontrado um valor estimado explícito no edital para este lote) — confira manualmente.</li><li>⚠️ O financiamento não estará quitado ao final do contrato: saldo devedor estimado de 24.507,85 por veículo (prazo de financiamento de 48 meses é maior que o prazo contratual de 32 meses),</li><li>⚠️ Quantidade do lote pode não ter sido extraída corretamente — conferir no PDF original.</li></ul>
+             <strong>Pendências</strong><ul><li>☐ Confirmar franquia de KM e valor do excedente para este lote</li><li>☐ Confirmar prazo de entrega inicial da frota deste lote</li></ul></div>
+      </div>
+    </div>
+    <div class="card lote-card">
+      <div class="card-header">
+        <h3>🔴 Lote 1 <span class="lote-score">Score 12/100</span></h3>
+        <span class="badge bad">Participar? NÃO</span>
+      </div>
+      <p class="lote-desc">Participação</p>
+      <div class="lote-meta">
+        <span>🚗 2 veículo(s)</span>
+        <span>🏷️ SUV</span>
+        <span>📋 Ref.: Renault Duster Zen 1.6</span>
+        <span class="badge bad">Risco Alto</span>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><span class="stat-label">Capital necessário</span><span class="stat-value">R$ 37.800,00</span></div>
+        <div class="stat"><span class="stat-label">Receita bruta</span><span class="stat-value">R$ 223.840,19</span></div>
+        <div class="stat"><span class="stat-label">Margem operacional</span><span class="stat-value small">6,1%</span></div>
+        <div class="stat"><span class="stat-label">ROI (período)</span><span class="stat-value small">36,3%</span></div>
+        <div class="stat"><span class="stat-label">Payback</span><span class="stat-value small">Não calculado — dados insuficientes</span></div>
+        <div class="stat"><span class="stat-label">TIR anual</span><span class="stat-value small">11,3%</span></div>
+      </div>
+      <div class="bar-chart">
+        <div class="bar-row">
+          <span class="bar-label">Capital</span>
+          <div class="bar-track"><div class="bar-fill" style="width:16.9%;background:#3b82f6"></div></div>
+          <span class="bar-value">R$ 37.800,00</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Receita</span>
+          <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#22c55e"></div></div>
+          <span class="bar-value">R$ 223.840,19</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Custo</span>
+          <div class="bar-track"><div class="bar-fill" style="width:93.9%;background:#ef4444"></div></div>
+          <span class="bar-value">R$ 210.110,53</span>
+        </div></div>
+      <div class="lote-lists">
+        <div><strong>Por que "NÃO"?</strong><ul><li>Margem de 6.1% com risco Alto — pouco atrativo nas premissas atuais.</li><li>Payback não calculável.</li><li>3 alerta(s) identificado(s) neste lote.</li></ul></div>
+        <div><strong>Alertas</strong><ul><li>⚠️ Receita estimada com base em referência de mercado (não foi encontrado um valor estimado explícito no edital para este lote) — confira manualmente.</li><li>⚠️ O financiamento não estará quitado ao final do contrato: saldo devedor estimado de 31.382,00 por veículo (prazo de financiamento de 48 meses é maior que o prazo contratual de 32 meses),</li><li>⚠️ Payback não calculado: fluxo de caixa mensal é negativo ou nulo com as premissas atuais.</li></ul>
+             <strong>Pendências</strong><ul><li>☐ Confirmar franquia de KM e valor do excedente para este lote</li><li>☐ Confirmar prazo de entrega inicial da frota deste lote</li></ul></div>
+      </div>
+    </div>
+    <div class="card lote-card">
+      <div class="card-header">
+        <h3>🔴 Lote 2 <span class="lote-score">Score 38/100</span></h3>
+        <span class="badge bad">Participar? NÃO</span>
+      </div>
+      <p class="lote-desc">Participação</p>
+      <div class="lote-meta">
+        <span>🚗 180 veículo(s)</span>
+        <span>🏷️ Sedã</span>
+        <span>📋 Ref.: Chevrolet Onix Plus 1.0 Turbo</span>
+        <span class="badge bad">Risco Alto</span>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><span class="stat-label">Capital necessário</span><span class="stat-value">R$ 2.980.800,00</span></div>
+        <div class="stat"><span class="stat-label">Receita bruta</span><span class="stat-value">R$ 20.145.616,67</span></div>
+        <div class="stat"><span class="stat-label">Margem operacional</span><span class="stat-value small">16,5%</span></div>
+        <div class="stat"><span class="stat-label">ROI (período)</span><span class="stat-value small">111,7%</span></div>
+        <div class="stat"><span class="stat-label">Payback</span><span class="stat-value small">59,7 meses</span></div>
+        <div class="stat"><span class="stat-label">TIR anual</span><span class="stat-value small">39,6%</span></div>
+      </div>
+      <div class="bar-chart">
+        <div class="bar-row">
+          <span class="bar-label">Capital</span>
+          <div class="bar-track"><div class="bar-fill" style="width:14.8%;background:#3b82f6"></div></div>
+          <span class="bar-value">R$ 2.980.800,00</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Receita</span>
+          <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#22c55e"></div></div>
+          <span class="bar-value">R$ 20.145.616,67</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Custo</span>
+          <div class="bar-track"><div class="bar-fill" style="width:83.5%;background:#ef4444"></div></div>
+          <span class="bar-value">R$ 16.816.713,20</span>
+        </div></div>
+      <div class="lote-lists">
+        <div><strong>Por que "NÃO"?</strong><ul><li>Margem de 16.5% com risco Alto — pouco atrativo nas premissas atuais.</li><li>2 alerta(s) identificado(s) neste lote.</li></ul></div>
+        <div><strong>Alertas</strong><ul><li>⚠️ Receita estimada com base em referência de mercado (não foi encontrado um valor estimado explícito no edital para este lote) — confira manualmente.</li><li>⚠️ O financiamento não estará quitado ao final do contrato: saldo devedor estimado de 27.496,61 por veículo (prazo de financiamento de 48 meses é maior que o prazo contratual de 32 meses),</li></ul>
+             <strong>Pendências</strong><ul><li>☐ Confirmar franquia de KM e valor do excedente para este lote</li><li>☐ Confirmar prazo de entrega inicial da frota deste lote</li></ul></div>
+      </div>
+    </div>
+    <div class="card lote-card">
+      <div class="card-header">
+        <h3>🟡 Lote 3 <span class="lote-score">Score 75/100</span></h3>
+        <span class="badge warn">Participar? TALVEZ</span>
+      </div>
+      <p class="lote-desc">, a partir do saque do 1º veículo, deverá ser</p>
+      <div class="lote-meta">
+        <span>🚗 31 veículo(s)</span>
+        <span>🏷️ Não especificado</span>
+        <span>📋 Ref.: Chevrolet Onix Joy 1.0</span>
+        <span class="badge warn">Risco Médio</span>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><span class="stat-label">Capital necessário</span><span class="stat-value">R$ 401.760,00</span></div>
+        <div class="stat"><span class="stat-label">Receita bruta</span><span class="stat-value">R$ 3.469.522,87</span></div>
+        <div class="stat"><span class="stat-label">Margem operacional</span><span class="stat-value small">27,7%</span></div>
+        <div class="stat"><span class="stat-label">ROI (período)</span><span class="stat-value small">239,2%</span></div>
+        <div class="stat"><span class="stat-label">Payback</span><span class="stat-value small">17,7 meses</span></div>
+        <div class="stat"><span class="stat-label">TIR anual</span><span class="stat-value small">107,3%</span></div>
+      </div>
+      <div class="bar-chart">
+        <div class="bar-row">
+          <span class="bar-label">Capital</span>
+          <div class="bar-track"><div class="bar-fill" style="width:11.6%;background:#3b82f6"></div></div>
+          <span class="bar-value">R$ 401.760,00</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Receita</span>
+          <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#22c55e"></div></div>
+          <span class="bar-value">R$ 3.469.522,87</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Custo</span>
+          <div class="bar-track"><div class="bar-fill" style="width:72.3%;background:#ef4444"></div></div>
+          <span class="bar-value">R$ 2.508.707,86</span>
+        </div></div>
+      <div class="lote-lists">
+        <div><strong>Por que "TALVEZ"?</strong><ul><li>Margem de 27.7% com risco Médio — viável, mas vale revisar premissas.</li><li>3 alerta(s) identificado(s) neste lote.</li></ul></div>
+        <div><strong>Alertas</strong><ul><li>⚠️ Receita estimada com base em referência de mercado (não foi encontrado um valor estimado explícito no edital para este lote) — confira manualmente.</li><li>⚠️ O financiamento não estará quitado ao final do contrato: saldo devedor estimado de 21.519,09 por veículo (prazo de financiamento de 48 meses é maior que o prazo contratual de 32 meses),</li><li>⚠️ Categoria de veículo não identificada automaticamente — revisar descrição do lote.</li></ul>
+             <strong>Pendências</strong><ul><li>☐ Confirmar franquia de KM e valor do excedente para este lote</li><li>☐ Confirmar prazo de entrega inicial da frota deste lote</li></ul></div>
+      </div>
+    </div>
+    <div class="card lote-card">
+      <div class="card-header">
+        <h3>🔴 Lote 4 <span class="lote-score">Score 38/100</span></h3>
+        <span class="badge bad">Participar? NÃO</span>
+      </div>
+      <p class="lote-desc">, a partir do saque do 1º veículo, deverá serdisponibilizado 01 (um) veículo reserva; a partir do saque do 11ºveículo, deverá ser disponibilizado mais 01 (um) veículo reserva pelacontratada; a partir do saque do 21º veículo, deverá serdisponibilizado</p>
+      <div class="lote-meta">
+        <span>🚗 21 veículo(s)</span>
+        <span>🏷️ Sedã</span>
+        <span>📋 Ref.: Chevrolet Onix Plus 1.0 Turbo</span>
+        <span class="badge bad">Risco Alto</span>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><span class="stat-label">Capital necessário</span><span class="stat-value">R$ 347.760,00</span></div>
+        <div class="stat"><span class="stat-label">Receita bruta</span><span class="stat-value">R$ 2.350.321,94</span></div>
+        <div class="stat"><span class="stat-label">Margem operacional</span><span class="stat-value small">16,5%</span></div>
+        <div class="stat"><span class="stat-label">ROI (período)</span><span class="stat-value small">111,7%</span></div>
+        <div class="stat"><span class="stat-label">Payback</span><span class="stat-value small">59,7 meses</span></div>
+        <div class="stat"><span class="stat-label">TIR anual</span><span class="stat-value small">39,6%</span></div>
+      </div>
+      <div class="bar-chart">
+        <div class="bar-row">
+          <span class="bar-label">Capital</span>
+          <div class="bar-track"><div class="bar-fill" style="width:14.8%;background:#3b82f6"></div></div>
+          <span class="bar-value">R$ 347.760,00</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Receita</span>
+          <div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#22c55e"></div></div>
+          <span class="bar-value">R$ 2.350.321,94</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-label">Custo</span>
+          <div class="bar-track"><div class="bar-fill" style="width:83.5%;background:#ef4444"></div></div>
+          <span class="bar-value">R$ 1.961.949,87</span>
+        </div></div>
+      <div class="lote-lists">
+        <div><strong>Por que "NÃO"?</strong><ul><li>Margem de 16.5% com risco Alto — pouco atrativo nas premissas atuais.</li><li>2 alerta(s) identificado(s) neste lote.</li></ul></div>
+        <div><strong>Alertas</strong><ul><li>⚠️ Receita estimada com base em referência de mercado (não foi encontrado um valor estimado explícito no edital para este lote) — confira manualmente.</li><li>⚠️ O financiamento não estará quitado ao final do contrato: saldo devedor estimado de 27.496,61 por veículo (prazo de financiamento de 48 meses é maior que o prazo contratual de 32 meses),</li></ul>
+             <strong>Pendências</strong><ul><li>☐ Confirmar franquia de KM e valor do excedente para este lote</li><li>☐ Confirmar prazo de entrega inicial da frota deste lote</li></ul></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="financeiro">
+  <h2>💰 Financeiro — DRE Consolidada</h2>
+  <div class="grid grid-2">
+    <div class="card">
+      <h3 style="margin-top:0">Demonstrativo de Resultado</h3>
+      <div class="dre-row  "><span>Receita Bruta</span><span>R$ 26.301.221,76</span></div><div class="dre-row  dre-negativo"><span>(-) Tributos</span><span>-R$ 2.104.097,74</span></div><div class="dre-row  dre-negativo"><span>(-) Seguro</span><span>-R$ 2.118.412,80</span></div><div class="dre-row  dre-negativo"><span>(-) Manutenção</span><span>-R$ 2.892.160,00</span></div><div class="dre-row  dre-negativo"><span>(-) Pneus</span><span>-R$ 539.520,00</span></div><div class="dre-row  dre-negativo"><span>(-) Administração</span><span>-R$ 1.315.061,08</span></div><div class="dre-row  dre-negativo"><span>(-) Financeiro</span><span>-R$ 5.373.291,48</span></div><div class="dre-row  dre-negativo"><span>(-) Depreciação</span><span>-R$ 6.652.194,48</span></div><div class="dre-row  dre-negativo"><span>(-) Custos Operacionais</span><span>-R$ 601.600,00</span></div><div class="dre-row dre-destaque "><span>= Lucro Operacional</span><span>R$ 4.704.884,17</span></div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Indicadores (sobre fluxo de caixa)</h3>
+      <div class="stat-grid" style="grid-template-columns:repeat(2,1fr)">
+        <div class="stat"><span class="stat-label">Capital investido</span><span class="stat-value">R$ 3.782.880,00</span></div>
+        <div class="stat"><span class="stat-label">Margem operacional</span><span class="stat-value small">17,9%</span></div>
+        <div class="stat"><span class="stat-label">ROI (período)</span><span class="stat-value small">117,5%</span></div>
+        <div class="stat"><span class="stat-label">Payback</span><span class="stat-value small">60,6 meses</span></div>
+        <div class="stat"><span class="stat-label">TIR (a.a.)</span><span class="stat-value small">45,6%</span></div>
+        <div class="stat"><span class="stat-label">VPL</span><span class="stat-value small">R$ 1.910.611,03</span></div>
+        <div class="stat"><span class="stat-label">Valor residual líquido (pós-financiamento)</span><span class="stat-value small">R$ 5.981.022,65 (bruto R$ 12.262.205,52 - saldo devedor R$ 6.281.182,87)</span></div>
+        <div class="stat"><span class="stat-label">Reserva técnica sugerida</span><span class="stat-value small">R$ 2.159.633,76</span></div>
+      </div>
+      <p style="font-size:11px;color:var(--text-dim);margin-top:14px">
+        Margem usa o Lucro Operacional (contábil, inclui depreciação). ROI/Payback/TIR/VPL usam o
+        fluxo de caixa (Lucro Operacional + Depreciação, que não é desembolso), com o capital investido
+        no início e o valor residual no fim do contrato.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section id="juridico">
+  <h2>⚖️ Jurídico</h2>
+  <div class="card">
+    <h3 style="margin-top:0">Análise de risco (com página/trecho do edital)</h3>
+    <div class="doc-card">
+      <div class="card-header" style="margin-bottom:6px"><span class="badge warn">Média</span></div>
+      <p>Não foi localizada menção explícita a franquia de quilometragem. Isso pode indicar "KM livre" (risco de sobrecusto) ou apenas ausência de detalhamento no texto disponível — recomenda-se confirmar diretamente no edital.</p>
+      <p class="doc-fonte">📄 Não localizado no texto disponível — confirmar manualmente no edital.</p>
+    </div><div class="doc-card">
+      <div class="card-header" style="margin-bottom:6px"><span class="badge ok">Baixa</span></div>
+      <p>Cláusula de reajuste/reequilíbrio identificada — confira o índice usado (ex.: IPCA, IGP-M) e a periodicidade.</p>
+      <p class="doc-fonte">📄 Página 29: "inda, de modificação do preço registrado em decorrência de reajustamento, repactuação ou alteração, poderá ser procedida à reorgani"</p>
+    </div><div class="doc-card">
+      <div class="card-header" style="margin-bottom:6px"><span class="badge warn">Média</span></div>
+      <p>Edital exige comprovação de balanço patrimonial/capital social/patrimônio líquido mínimo para habilitação — confirme se a empresa atende ao requisito antes de investir tempo na proposta.</p>
+      <p class="doc-fonte">📄 Página 47: "(um), comprovados mediante aapresentação pelo licitante de balanço patrimonial, demonstração de resultado de exercício e demais demonstraç"</p>
+    </div>
+  </div>
+  <div class="grid grid-2" style="margin-top:16px">
+    <div class="card">
+      <h3 style="margin-top:0">Leis aplicáveis</h3>
+      <div class="doc-card">
+      <h4>Lei Complementar nº 123/2006 — Estatuto Nacional da Microempresa e EPP</h4>
+      <p>Institui tratamento diferenciado e favorecido a Microempresas (ME) e Empresas
+de Pequeno Porte (EPP) em licitações públicas, incluindo empate ficto,
+possibilidade de exclusividade em itens de menor valor e prazos ampliados
+para regularização fiscal.</p>
+      <p class="doc-fonte">Fonte: https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp123.htm</p>
+    </div><div class="doc-card">
+      <h4>Lei nº 14.133/2021 — Nova Lei de Licitações e Contratos Administrativos</h4>
+      <p>Substitui as Leis 8.666/1993, 10.520/2002 (pregão) e parte da 12.462/2011 (RDC),
+unificando o regime de licitações e contratos da Administração Pública. Traz
+regras específicas sobre pesquisa de preços, matriz de riscos, contratação
+integrada, reajuste/repactuação, sanções e o Portal Nacional de Contratações
+Públicas (PNCP).</p>
+      <p class="doc-fonte">Fonte: https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2021/lei/l14133.htm</p>
+    </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Acórdãos relevantes (TCU)</h3>
+      <div class="doc-card">
+      <h4>Acórdão 1489/2018-Plenário (linha de entendimento consolidada do TCU)</h4>
+      <p class="doc-tema">Locação de veículos — franquia de quilometragem</p>
+      <p>O TCU tem reiterado que contratos de locação de veículos sem franquia de
+quilometragem definida (o chamado "KM livre") tendem a gerar sobrepreço e
+dificultam a fiscalização do uso da frota, sendo recomendável fixar franquia
+mensal compatível com a real necessidade do órgão, com regras claras para
+cobrança de KM excedente.</p>
+      <p class="doc-fonte">Fonte: TCU — jurisprudência consolidada sobre locação de veículos (Portal TCU, pesquisa "locação de veículos franquia KM")</p>
+    </div><div class="doc-card">
+      <h4>Acórdão 1445/2015-Plenário e Instrução Normativa SEGES/ME nº 65/2021</h4>
+      <p class="doc-tema">Pesquisa de preços e orçamento estimado</p>
+      <p>O TCU e a IN SEGES/ME 65/2021 orientam que o orçamento estimado da
+Administração deve ser formado preferencialmente por mediana de preços
+obtidos em fontes diversas (Painel de Preços, contratações similares,
+mídias especializadas), evitando cotação isolada com fornecedores
+(que tende a inflar o preço de referência).</p>
+      <p class="doc-fonte">Fonte: TCU + IN SEGES/ME 65/2021</p>
+    </div><div class="doc-card">
+      <h4>Jurisprudência TCU sobre álea econômica extraordinária (art. 124-125, Lei 14.133)</h4>
+      <p class="doc-tema">Reequilíbrio econômico-financeiro em contratos de locação</p>
+      <p>O TCU reconhece o direito ao reequilíbrio econômico-financeiro quando
+eventos imprevisíveis (ou de consequências incalculáveis) alteram
+significativamente o custo do contrato — por exemplo, disparada no preço de
+veículos 0km, combustível ou peças. É diferente do reajuste anual por índice
+(previsível e contratual).</p>
+      <p class="doc-fonte">Fonte: TCU — jurisprudência sobre equilíbrio econômico-financeiro</p>
+    </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Checklist Jurídico</h3>
+      <ul><li class="checklist-item"><label><input type="checkbox" id="jur-0"> Conferir se há franquia de KM definida e valor do KM excedente</label></li><li class="checklist-item"><label><input type="checkbox" id="jur-1"> Conferir índice de reajuste anual e cláusula de reequilíbrio (art. 124-125, Lei 14.133)</label></li><li class="checklist-item"><label><input type="checkbox" id="jur-2"> Conferir matriz de riscos e responsabilidade por sinistros</label></li><li class="checklist-item"><label><input type="checkbox" id="jur-3"> Conferir exigência de veículo reserva/substituto e prazo de substituição</label></li><li class="checklist-item"><label><input type="checkbox" id="jur-4"> Conferir percentual de multa e hipóteses de rescisão unilateral</label></li><li class="checklist-item"><label><input type="checkbox" id="jur-5"> Conferir garantia contratual exigida (art. 96-98, Lei 14.133)</label></li><li class="checklist-item"><label><input type="checkbox" id="jur-6"> Conferir benefícios de ME/EPP aplicáveis (LC 123/2006), se houver</label></li></ul>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Itens para esclarecimento / possíveis impugnações</h3>
+      <ul><li>Solicitar esclarecimento sobre metodologia da pesquisa de preços, se não estiver explícita</li><li>Solicitar esclarecimento sobre franquia de KM, se omissa no edital</li><li>Solicitar esclarecimento sobre índice de reajuste, se não previsto</li></ul>
+    </div>
+  </div>
+</section>
+
+<section id="operacional">
+  <h2>🔧 Operacional</h2>
+  <div class="grid grid-2">
+    <div class="card">
+      <h3 style="margin-top:0">Veículos por lote</h3>
+      <div class="doc-card">
+          <h4>Lote 9 — Van/Furgão</h4>
+          <p><strong>Fiat Fiorino Furgão 1.4</strong> · 1 unidade(s)</p>
+          <p>FIPE ref.: R$ 82.000,00 · Consumo: 11,5 km/l (cidade)</p>
+          <p>Pneu: 175/70 R13 · Valor residual estimado: R$ 47.844,54</p>
+          <p>Garantia: 3 anos, km ilimitado (garantia de fábrica)</p>
+          <p class="doc-fonte">Furgão leve para transporte de materiais e saúde (insumos).</p>
+        </div><div class="doc-card">
+          <h4>Lote 1 — SUV</h4>
+          <p><strong>Renault Duster Zen 1.6</strong> · 2 unidade(s)</p>
+          <p>FIPE ref.: R$ 105.000,00 · Consumo: 11,2 km/l (cidade)</p>
+          <p>Pneu: 215/65 R16 · Valor residual estimado: R$ 61.264,35</p>
+          <p>Garantia: 3 anos ou 100.000 km (garantia de fábrica)</p>
+          <p class="doc-fonte">SUV com boa relação custo-benefício para zona rural.</p>
+        </div><div class="doc-card">
+          <h4>Lote 2 — Sedã</h4>
+          <p><strong>Chevrolet Onix Plus 1.0 Turbo</strong> · 180 unidade(s)</p>
+          <p>FIPE ref.: R$ 92.000,00 · Consumo: 12,5 km/l (cidade)</p>
+          <p>Pneu: 195/55 R16 · Valor residual estimado: R$ 53.679,24</p>
+          <p>Garantia: 3 anos ou 100.000 km (garantia de fábrica)</p>
+          <p class="doc-fonte">Sedã compacto usado para representação/gestão.</p>
+        </div><div class="doc-card">
+          <h4>Lote 3 — Não especificado</h4>
+          <p><strong>Chevrolet Onix Joy 1.0</strong> · 31 unidade(s)</p>
+          <p>FIPE ref.: R$ 72.000,00 · Consumo: 14,5 km/l (cidade)</p>
+          <p>Pneu: 175/70 R14 · Valor residual estimado: R$ 42.009,84</p>
+          <p>Garantia: 3 anos ou 100.000 km (garantia de fábrica)</p>
+          <p class="doc-fonte">Veículo popular mais usado em frotas administrativas.</p>
+        </div><div class="doc-card">
+          <h4>Lote 4 — Sedã</h4>
+          <p><strong>Chevrolet Onix Plus 1.0 Turbo</strong> · 21 unidade(s)</p>
+          <p>FIPE ref.: R$ 92.000,00 · Consumo: 12,5 km/l (cidade)</p>
+          <p>Pneu: 195/55 R16 · Valor residual estimado: R$ 53.679,24</p>
+          <p>Garantia: 3 anos ou 100.000 km (garantia de fábrica)</p>
+          <p class="doc-fonte">Sedã compacto usado para representação/gestão.</p>
+        </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Prazos e manutenção</h3>
+      <p><strong>Prazo de entrega:</strong> Prazo de entrega não identificado no texto — confirmar diretamente no edital.</p>
+      <p><strong>Manutenção:</strong> Preventiva conforme manual do fabricante + corretiva sob demanda, sem custo adicional ao órgão.</p>
+      <p><strong>Seguro:</strong> Cobertura compreensiva (colisão, roubo/furto, incêndio) + RCF terceiros, conforme exigência do edital.</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Documentação exigida</h3>
+      <ul><li>CRLV em dia</li><li>Licenciamento anual</li><li>IPVA quitado</li><li>Comprovante de seguro vigente</li></ul>
+      <h3>Exigências</h3>
+      <ul><li>Frota nova ou com idade máxima conforme edital</li><li>Substituição de veículo em pane dentro do prazo definido</li><li>Identificação visual conforme exigência do órgão (se aplicável)</li></ul>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Checklist Operacional</h3>
+      <ul><li class="checklist-item"><label><input type="checkbox" id="op-0"> Confirmar disponibilidade de frota compatível com o prazo de entrega exigido</label></li><li class="checklist-item"><label><input type="checkbox" id="op-1"> Confirmar capacidade de manutenção/suporte na região do órgão</label></li><li class="checklist-item"><label><input type="checkbox" id="op-2"> Confirmar cobertura de seguro compatível com a exigência do edital</label></li><li class="checklist-item"><label><input type="checkbox" id="op-3"> Confirmar documentação da frota (CRLV, licenciamento, IPVA) antes da entrega</label></li></ul>
+    </div>
+  </div>
+</section>
+
+<section id="checklist">
+  <h2>✅ O que preciso fazer</h2>
+  <div class="card">
+    <ul><li class="checklist-item"><label><input type="checkbox" id="prat-0"> Confirmar franquia de KM e valor do KM excedente diretamente no edital</label></li><li class="checklist-item"><label><input type="checkbox" id="prat-1"> Confirmar exigências específicas de seguro (cobertura, franquia)</label></li><li class="checklist-item"><label><input type="checkbox" id="prat-2"> Conferir prazo de entrega inicial da frota</label></li><li class="checklist-item"><label><input type="checkbox" id="prat-3"> Solicitar cotação para o Lote 9 (van): Fiat, Renault</label></li><li class="checklist-item"><label><input type="checkbox" id="prat-4"> Solicitar cotação para o Lote 1 (suv): Renault, Jeep</label></li><li class="checklist-item"><label><input type="checkbox" id="prat-5"> Solicitar cotação para o Lote 2 (sedan): Chevrolet, Toyota</label></li><li class="checklist-item"><label><input type="checkbox" id="prat-6"> Solicitar cotação para o Lote 4 (sedan): Chevrolet, Toyota</label></li><li class="checklist-item"><label><input type="checkbox" id="prat-7"> Não foi localizada menção explícita a franquia de quilometragem</label></li><li class="checklist-item"><label><input type="checkbox" id="prat-8"> Edital exige comprovação de balanço patrimonial/capital social/patrimônio líquido mínimo para habilitação</label></li></ul>
+  </div>
+</section>
+
+<section id="timeline">
+  <h2>🗓️ Timeline do processo</h2>
+  <div class="card">
+    <div class="tl-item">
+          <div class="tl-dot ok"></div>
+          <div><strong>Publicação do edital</strong><div class="tl-info">publicado no D</div></div>
+        </div><div class="tl-item">
+          <div class="tl-dot ok"></div>
+          <div><strong>Pedidos de esclarecimento</strong><div class="tl-info">esclarecimentos e impugnação no prazo de até 03</div></div>
+        </div><div class="tl-item">
+          <div class="tl-dot ok"></div>
+          <div><strong>Impugnações</strong><div class="tl-info">impugnação no prazo de até 03</div></div>
+        </div><div class="tl-item">
+          <div class="tl-dot ok"></div>
+          <div><strong>Sessão pública</strong><div class="tl-info">sessão pública da</div></div>
+        </div><div class="tl-item">
+          <div class="tl-dot ok"></div>
+          <div><strong>Homologação</strong><div class="tl-info">homologação</div></div>
+        </div><div class="tl-item">
+          <div class="tl-dot ok"></div>
+          <div><strong>Assinatura do contrato</strong><div class="tl-info">assinatura do contrato ou da ata de registro de preços, os documentos de que trata este</div></div>
+        </div><div class="tl-item">
+          <div class="tl-dot ok"></div>
+          <div><strong>Entrega da frota</strong><div class="tl-info">prazo de entrega de até 30(trinta) dias da expedição da ordem de fornecimento; (item 3, inc</div></div>
+        </div><div class="tl-item">
+          <div class="tl-dot ok"></div>
+          <div><strong>Reajuste contratual</strong><div class="tl-info">reajustamento, repactuação ou alteração, poderá ser</div></div>
+        </div><div class="tl-item">
+          <div class="tl-dot ok"></div>
+          <div><strong>Encerramento do contrato</strong><div class="tl-info">vigência do contrato ou da ata de registro de preços, a Administração poderá,</div></div>
+        </div>
+  </div>
+</section>
+
+<section id="simulacao">
+  <h2>🧮 Simulações Financeiras</h2>
+  <div class="card">
+    <div class="sim-grid">
+      <div>
+        <div class="sim-field">
+          <label>Lote simulado</label>
+          <select id="sim-lote"><option value="9">Lote 9 (1 veíc.)</option><option value="1">Lote 1 (2 veíc.)</option><option value="2">Lote 2 (180 veíc.)</option><option value="3">Lote 3 (31 veíc.)</option><option value="4">Lote 4 (21 veíc.)</option></select>
+        </div>
+        <div class="sim-field"><label>Desconto da montadora <span id="v-desconto"></span></label>
+          <input type="range" id="p-desconto" min="0" max="0.40" step="0.01"></div>
+        <div class="sim-field"><label>Entrada <span id="v-entrada"></span></label>
+          <input type="range" id="p-entrada" min="0" max="1" step="0.05"></div>
+        <div class="sim-field"><label>Taxa de juros a.m. <span id="v-juros"></span></label>
+          <input type="range" id="p-juros" min="0" max="0.05" step="0.001"></div>
+        <div class="sim-field"><label>Prazo do financiamento (meses) <span id="v-prazofin"></span></label>
+          <input type="range" id="p-prazofin" min="12" max="72" step="1"></div>
+        <div class="sim-field"><label>Seguro a.m. (% do valor) <span id="v-seguro"></span></label>
+          <input type="range" id="p-seguro" min="0" max="0.01" step="0.0005"></div>
+        <div class="sim-field"><label>Manutenção mensal (R$) <span id="v-manutencao"></span></label>
+          <input type="range" id="p-manutencao" min="100" max="2000" step="50"></div>
+        <div class="sim-field"><label>Pneus mensal (R$) <span id="v-pneus"></span></label>
+          <input type="range" id="p-pneus" min="20" max="400" step="10"></div>
+        <div class="sim-field"><label>Tributos (% da receita) <span id="v-tributos"></span></label>
+          <input type="range" id="p-tributos" min="0" max="0.20" step="0.005"></div>
+        <div class="sim-field"><label>Administração (% da receita) <span id="v-administracao"></span></label>
+          <input type="range" id="p-administracao" min="0" max="0.15" step="0.005"></div>
+        <div class="sim-field"><label>Custos operacionais mensal (R$) <span id="v-custosop"></span></label>
+          <input type="range" id="p-custosop" min="0" max="500" step="10"></div>
+        <div class="sim-field"><label>Valor residual <span id="v-residual"></span></label>
+          <input type="range" id="p-residual" min="0" max="0.99" step="0.01"></div>
+      </div>
+      <div>
+        <div class="sim-result-grid">
+          <div class="sim-result"><span class="stat-label">Capital necessário</span><span class="stat-value" id="r-capital">—</span></div>
+          <div class="sim-result"><span class="stat-label">Receita bruta</span><span class="stat-value" id="r-receita">—</span></div>
+          <div class="sim-result"><span class="stat-label">Lucro operacional</span><span class="stat-value" id="r-lucro">—</span></div>
+          <div class="sim-result"><span class="stat-label">Margem</span><span class="stat-value" id="r-margem">—</span></div>
+          <div class="sim-result"><span class="stat-label">ROI (período)</span><span class="stat-value" id="r-roi">—</span></div>
+          <div class="sim-result"><span class="stat-label">Payback</span><span class="stat-value" id="r-payback">—</span></div>
+          <div class="sim-result"><span class="stat-label">TIR (a.a.)</span><span class="stat-value" id="r-tir">—</span></div>
+          <div class="sim-result"><span class="stat-label">VPL</span><span class="stat-value" id="r-vpl">—</span></div>
+        </div>
+        <p style="color:var(--text-dim);font-size:12px;margin-top:16px">
+          Recalcula automaticamente, usando a mesma fórmula de DRE do motor em Python
+          (scripts/financial.py). Valores iniciais = premissas padrão da análise.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="mercado">
+  <h2>🌐 Inteligência de Mercado</h2>
+  <div class="card market-card">
+    <div class="lock">🔒</div>
+    <p style="font-size:16px;color:var(--text)">Benchmark de Mercado disponível na Versão 2.</p>
+    <p>A estrutura de dados (market.db) já está pronta para receber o módulo de benchmark sem alterações no restante do sistema.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>Rota13 Bid Intelligence — Gerado automaticamente a partir do edital em PDF</footer>
+
+<script id="analise-data" type="application/json">{"meta": {"arquivo_pdf": "1784136457_EDITALSUPERINTENDENCIADERECURSOSLOGISTICOS-BAHIA-27.07.pdf", "sistema": "Rota13 Bid Intelligence — Sprint 2", "motor_extracao": "regex"}, "resumo_executivo": {"decisao": "GO COM RESSALVAS", "motivos_decisao": ["Riscos abaixo do esperado (0/10 pontos)."], "score_geral": 66.0, "score_categorias": {"financeiro": {"pontos": 24, "maximo": 40, "motivos": ["Margem operacional de 17.9% (12/20 pontos).", "Payback de 60.6 meses em um contrato de 32 meses (2/10 pontos).", "TIR anual de 45.6% (10/10 pontos)."]}, "juridico": {"pontos": 14, "maximo": 20, "motivos": ["0 risco(s) de severidade alta e 2 de severidade média identificados.", "Não foi localizada menção explícita a franquia de quilometragem.", "Edital exige comprovação de balanço patrimonial/capital social/patrimônio líquido mínimo para habilitação."]}, "operacional": {"pontos": 18, "maximo": 20, "motivos": ["1 de 5 lote(s) sem categoria de veículo identificada automaticamente."]}, "documentacao": {"pontos": 10.0, "maximo": 10, "motivos": ["Todos os campos-chave do edital foram identificados no documento."]}, "riscos": {"pontos": 0, "maximo": 10, "motivos": ["13 alerta(s) identificado(s) somando todos os lotes."]}}, "orgao": "Tratante Descontará D", "numero_processo": "Pregão Eletrônico nº 068/2026", "objeto": "da licitação/Codificação no Certificado de Registro – SAEB: Objeto: Locação de Veículos Híbridos de Representação Funcional para Secretários, Equivalentes e Outras Autoridades do Governo, para atendimento às Unidades da Administração Pública Estadual. Família: Vide item 1", "prazo_contratual_meses": 32, "valor_estimado": 26301221.76, "valor_estimado_explicito": false, "qtd_lotes": 5, "qtd_itens": 235, "pontos_fortes": ["Margem operacional saudável (17.9%)."], "pontos_fracos": ["Payback longo, 60.6 meses."], "riscos": ["Riscos jurídicos relevantes identificados — ver seção Jurídico."], "oportunidades": ["Avaliar cada lote individualmente na seção Análise por Lote."], "decisoes_necessarias": ["Confirmar premissas financeiras (desconto de montadora, taxa de juros) com fornecedores reais antes de propor preço.", "Avaliar se as ressalvas identificadas inviabilizam a participação."], "acoes_recomendadas": ["Revisar o checklist prático (seção \"O que preciso fazer\") antes da sessão pública.", "Considerar pedido de esclarecimento sobre os pontos jurídicos levantados."]}, "semaforo": {"financeiro": {"label": "Financeiro", "cor": "amarelo", "justificativa": "Margem operacional de 17.9% (12/20 pontos)."}, "juridico": {"label": "Jurídico", "cor": "verde", "justificativa": "0 risco(s) de severidade alta e 2 de severidade média identificados."}, "operacional": {"label": "Operacional", "cor": "verde", "justificativa": "1 de 5 lote(s) sem categoria de veículo identificada automaticamente."}, "documentacao": {"label": "Documentação", "cor": "verde", "justificativa": "Todos os campos-chave do edital foram identificados no documento."}, "entrega": {"label": "Entrega", "cor": "amarelo", "justificativa": "Prazo de entrega não identificado no texto — confirmar diretamente no edital."}}, "lotes": [{"numero": 9, "descricao": ". Ordem de fases da licitação:", "quantidade": 1, "categoria_veiculo": "van", "fonte": {"pagina": 3, "trecho": "8. Critério de julgamento: (X) Menor Preço ( X) Por lote 9. Ordem de fases da licitação: (X) Na presente licitaçã"}, "veiculo_referencia": {"id": 11, "marca": "Fiat", "modelo": "Fiorino Furgão 1.4", "categoria": "van", "ano": 2024, "motor": "1.4 Fire Flex", "combustivel": "Flex", "potencia": "88 cv", "torque": "12,7 kgfm", "consumo": "11,5 km/l (cidade)", "tanque": "48 L", "porta_malas": "1200 L (carga)", "capacidade": "2 lugares + carga", "pneu": "175/70 R13", "fipe": 82000.0, "observacoes": "Furgão leve para transporte de materiais e saúde (insumos).", "garantia": "3 anos, km ilimitado (garantia de fábrica)"}, "financeiro": {"premissas": {"desconto_montadora": 0.1, "entrada_pct": 0.2, "taxa_juros_am": 0.015, "prazo_financiamento_meses": 48, "seguro_pct_am": 0.0035, "manutencao_mensal": null, "pneus_mensal": null, "tributos_pct": 0.08, "administracao_pct": 0.05, "custos_operacionais_mensal": 80.0, "valor_residual_pct": null, "manutencao_mensal_aplicada": 700.0, "pneus_mensal_aplicado": 130.0, "valor_residual_pct_aplicado": 0.6483}, "dre": {"receita_bruta": 111920.09, "tributos": -8953.61, "seguro": -8265.6, "manutencao": -22400.0, "pneus": -4160.0, "administracao": -5596.0, "financeiro": -20965.45, "depreciacao": -25955.46, "custos_operacionais": -2560.0, "lucro_operacional": 13063.97}, "preco_compra_unitario": 73800.0, "capital_necessario": 14760.0, "receita_mensal_unitaria": 3497.5, "receita_estimada": 111920.09, "custo_total": 98856.12, "margem_estimada": 0.1167, "roi": 0.8851, "payback_meses": 105.3, "tir_mensal": 0.0222, "tir_anual": 0.3009, "vpl": 3275.07, "fluxo_caixa_mensal": 140.23, "valor_residual_total": 47844.54, "valor_residual_unitario": 47844.54, "valor_residual_liquido_total": 23336.69, "saldo_devedor_final_total": 24507.85, "risco": "Alto", "avisos": ["Receita estimada com base em referência de mercado (não foi encontrado um valor estimado explícito no edital para este lote) — confira manualmente.", "O financiamento não estará quitado ao final do contrato: saldo devedor estimado de 24.507,85 por veículo (prazo de financiamento de 48 meses é maior que o prazo contratual de 32 meses),"]}, "alertas": ["Receita estimada com base em referência de mercado (não foi encontrado um valor estimado explícito no edital para este lote) — confira manualmente.", "O financiamento não estará quitado ao final do contrato: saldo devedor estimado de 24.507,85 por veículo (prazo de financiamento de 48 meses é maior que o prazo contratual de 32 meses),", "Quantidade do lote pode não ter sido extraída corretamente — conferir no PDF original."], "pendencias": ["Confirmar franquia de KM e valor do excedente para este lote", "Confirmar prazo de entrega inicial da frota deste lote"], "decisao_participar": {"decisao": "NÃO", "motivos": ["Margem de 11.7% com risco Alto — pouco atrativo nas premissas atuais.", "3 alerta(s) identificado(s) neste lote."]}, "score": 28, "semaforo": "vermelho"}, {"numero": 1, "descricao": "Participação", "quantidade": 2, "categoria_veiculo": "suv", "fonte": {"pagina": 38, "trecho": "observado o disposto na tabela ( x ) abaixo ( ) em anexo. LOTE 1 Participação [ampla/exclusiva] Item Código SIMPAS Descrição"}, "veiculo_referencia": {"id": 10, "marca": "Renault", "modelo": "Duster Zen 1.6", "categoria": "suv", "ano": 2024, "motor": "1.6 16V Flex", "combustivel": "Flex", "potencia": "120 cv", "torque": "16,4 kgfm", "consumo": "11,2 km/l (cidade)", "tanque": "50 L", "porta_malas": "445 L", "capacidade": "5 lugares", "pneu": "215/65 R16", "fipe": 105000.0, "observacoes": "SUV com boa relação custo-benefício para zona rural.", "garantia": "3 anos ou 100.000 km (garantia de fábrica)"}, "financeiro": {"premissas": {"desconto_montadora": 0.1, "entrada_pct": 0.2, "taxa_juros_am": 0.015, "prazo_financiamento_meses": 48, "seguro_pct_am": 0.0035, "manutencao_mensal": null, "pneus_mensal": null, "tributos_pct": 0.08, "administracao_pct": 0.05, "custos_operacionais_mensal": 80.0, "valor_residual_pct": null, "manutencao_mensal_aplicada": 450.0, "pneus_mensal_aplicado": 90.0, "valor_residual_pct_aplicado": 0.6483}, "dre": {"receita_bruta": 223840.19, "tributos": -17907.21, "seguro": -21168.0, "manutencao": -28800.0, "pneus": -5760.0, "administracao": -11192.01, "financeiro": -53692.01, "depreciacao": -66471.3, "custos_operacionais": -5120.0, "lucro_operacional": 13729.65}, "preco_compra_unitario": 94500.0, "capital_necessario": 37800.0, "receita_mensal_unitaria": 3497.5, "receita_estimada": 223840.19, "custo_total": 210110.53, "margem_estimada": 0.0613, "roi": 0.3632, "payback_meses": null, "tir_mensal": 0.009, "tir_anual": 0.1129, "vpl": -7188.92, "fluxo_caixa_mensal": -257.34, "valor_residual_total": 122528.7, "valor_residual_unitario": 61264.35, "valor_residual_liquido_total": 59764.69, "saldo_devedor_final_total": 62764.01, "risco": "Alto", "avisos": ["Receita estimada com base em referência de mercado (não foi encontrado um valor estimado explícito no edital para este lote) — confira manualmente.", "O financiamento não estará quitado ao final do contrato: saldo devedor estimado de 31.382,00 por veículo (prazo de financiamento de 48 meses é maior que o prazo contratual de 32 meses),", "Payback não calculado: fluxo de caixa mensal é negativo ou nulo com as premissas atuais."]}, "alertas": ["Receita estimada com base em referência de mercado (não foi encontrado um valor estimado explícito no edital para este lote) — confira manualmente.", "O financiamento não estará quitado ao final do contrato: saldo devedor estimado de 31.382,00 por veículo (prazo de financiamento de 48 meses é maior que o prazo contratual de 32 meses),", "Payback não calculado: fluxo de caixa mensal é negativo ou nulo com as premissas atuais."], "pendencias": ["Confirmar franquia de KM e valor do excedente para este lote", "Confirmar prazo de entrega inicial da frota deste lote"], "decisao_participar": {"decisao": "NÃO", "motivos": ["Margem de 6.1% com risco Alto — pouco atrativo nas premissas atuais.", "Payback não calculável.", "3 alerta(s) identificado(s) neste lote."]}, "score": 12, "semaforo": "vermelho"}, {"numero": 2, "descricao": "Participação", "quantidade": 180, "categoria_veiculo": "sedan", "fonte": {"pagina": 39, "trecho": "0139031166) SEI 009.16980.2026.0002572-71 / pg. 1 LOTE 2 Participação [ampla/exclusiva] Item Código SIMPAS Descrição"}, "veiculo_referencia": {"id": 3, "marca": "Chevrolet", "modelo": "Onix Plus 1.0 Turbo", "categoria": "sedan", "ano": 2024, "motor": "1.0 Turbo 12V", "combustivel": "Flex", "potencia": "116 cv", "torque": "16,8 kgfm", "consumo": "12,5 km/l (cidade)", "tanque": "44 L", "porta_malas": "469 L", "capacidade": "5 lugares", "pneu": "195/55 R16", "fipe": 92000.0, "observacoes": "Sedã compacto usado para representação/gestão.", "garantia": "3 anos ou 100.000 km (garantia de fábrica)"}, "financeiro": {"premissas": {"desconto_montadora": 0.1, "entrada_pct": 0.2, "taxa_juros_am": 0.015, "prazo_financiamento_meses": 48, "seguro_pct_am": 0.0035, "manutencao_mensal": null, "pneus_mensal": null, "tributos_pct": 0.08, "administracao_pct": 0.05, "custos_operacionais_mensal": 80.0, "valor_residual_pct": null, "manutencao_mensal_aplicada": 380.0, "pneus_mensal_aplicado": 70.0, "valor_residual_pct_aplicado": 0.6483}, "dre": {"receita_bruta": 20145616.67, "tributos": -1611649.33, "seguro": -1669248.0, "manutencao": -2188800.0, "pneus": -403200.0, "administracao": -1007280.83, "financeiro": -4233998.23, "depreciacao": -5241736.8, "custos_operacionais": -460800.0, "lucro_operacional": 3328903.47}, "preco_compra_unitario": 82800.0, "capital_necessario": 2980800.0, "receita_mensal_unitaria": 3497.5, "receita_estimada": 20145616.67, "custo_total": 16816713.2, "margem_estimada": 0.1652, "roi": 1.1168, "payback_meses": 59.7, "tir_mensal": 0.0282, "tir_anual": 0.3956, "vpl": 1206715.07, "fluxo_caixa_mensal": 49900.96, "valor_residual_total": 9662263.2, "valor_residual_unitario": 53679.24, "valor_residual_liquido_total": 4712872.82, "saldo_devedor_final_total": 4949390.38, "risco": "Alto", "avisos": ["Receita estimada com base em referência de mercado (não foi encontrado um valor estimado explícito no edital para este lote) — confira manualmente.", "O financiamento não estará quitado ao final do contrato: saldo devedor estimado de 27.496,61 por veículo (prazo de financiamento de 48 meses é maior que o prazo contratual de 32 meses),"]}, "alertas": ["Receita estimada com base em referência de mercado (não foi encontrado um valor estimado explícito no edital para este lote) — confira manualmente.", "O financiamento não estará quitado ao final do contrato: saldo devedor estimado de 27.496,61 por veículo (prazo de financiamento de 48 meses é maior que o prazo contratual de 32 meses),"], "pendencias": ["Confirmar franquia de KM e valor do excedente para este lote", "Confirmar prazo de entrega inicial da frota deste lote"], "decisao_participar": {"decisao": "NÃO", "motivos": ["Margem de 16.5% com risco Alto — pouco atrativo nas premissas atuais.", "2 alerta(s) identificado(s) neste lote."]}, "score": 38, "semaforo": "vermelho"}, {"numero": 3, "descricao": ", a partir do saque do 1º veículo, deverá ser", "quantidade": 31, "categoria_veiculo": "nao_especificado", "fonte": {"pagina": 57, "trecho": "a, totalizando 05 (cinco) veículos reservas; 2.1.6.3 Para o Lote 3, a partir do saque do 1º veículo, deverá ser Termo de Refer"}, "veiculo_referencia": {"id": 1, "marca": "Chevrolet", "modelo": "Onix Joy 1.0", "categoria": "hatch", "ano": 2024, "motor": "1.0 12V", "combustivel": "Flex", "potencia": "80 cv", "torque": "10,8 kgfm", "consumo": "14,5 km/l (cidade)", "tanque": "44 L", "porta_malas": "265 L", "capacidade": "5 lugares", "pneu": "175/70 R14", "fipe": 72000.0, "observacoes": "Veículo popular mais usado em frotas administrativas.", "garantia": "3 anos ou 100.000 km (garantia de fábrica)"}, "financeiro": {"premissas": {"desconto_montadora": 0.1, "entrada_pct": 0.2, "taxa_juros_am": 0.015, "prazo_financiamento_meses": 48, "seguro_pct_am": 0.0035, "manutencao_mensal": null, "pneus_mensal": null, "tributos_pct": 0.08, "administracao_pct": 0.05, "custos_operacionais_mensal": 80.0, "valor_residual_pct": null, "manutencao_mensal_aplicada": 400.0, "pneus_mensal_aplicado": 80.0, "valor_residual_pct_aplicado": 0.6483}, "dre": {"receita_bruta": 3469522.87, "tributos": -277561.83, "seguro": -224985.6, "manutencao": -396800.0, "pneus": -79360.0, "administracao": -173476.14, "financeiro": -570669.33, "depreciacao": -706494.96, "custos_operacionais": -79360.0, "lucro_operacional": 960815.01}, "preco_compra_unitario": 64800.0, "capital_necessario": 401760.0, "receita_mensal_unitaria": 3497.5, "receita_estimada": 3469522.87, "custo_total": 2508707.86, "margem_estimada": 0.2769, "roi": 2.3915, "payback_meses": 17.7, "tir_mensal": 0.0627, "tir_anual": 1.0735, "vpl": 567026.38, "fluxo_caixa_mensal": 22730.05, "valor_residual_total": 1302305.04, "valor_residual_unitario": 42009.84, "valor_residual_liquido_total": 635213.29, "saldo_devedor_final_total": 667091.75, "risco": "Médio", "avisos": ["Receita estimada com base em referência de mercado (não foi encontrado um valor estimado explícito no edital para este lote) — confira manualmente.", "O financiamento não estará quitado ao final do contrato: saldo devedor estimado de 21.519,09 por veículo (prazo de financiamento de 48 meses é maior que o prazo contratual de 32 meses),"]}, "alertas": ["Receita estimada com base em referência de mercado (não foi encontrado um valor estimado explícito no edital para este lote) — confira manualmente.", "O financiamento não estará quitado ao final do contrato: saldo devedor estimado de 21.519,09 por veículo (prazo de financiamento de 48 meses é maior que o prazo contratual de 32 meses),", "Categoria de veículo não identificada automaticamente — revisar descrição do lote."], "pendencias": ["Confirmar franquia de KM e valor do excedente para este lote", "Confirmar prazo de entrega inicial da frota deste lote"], "decisao_participar": {"decisao": "TALVEZ", "motivos": ["Margem de 27.7% com risco Médio — viável, mas vale revisar premissas.", "3 alerta(s) identificado(s) neste lote."]}, "score": 75, "semaforo": "amarelo"}, {"numero": 4, "descricao": ", a partir do saque do 1º veículo, deverá serdisponibilizado 01 (um) veículo reserva; a partir do saque do 11ºveículo, deverá ser disponibilizado mais 01 (um) veículo reserva pelacontratada; a partir do saque do 21º veículo, deverá serdisponibilizado", "quantidade": 21, "categoria_veiculo": "sedan", "fonte": {"pagina": 58, "trecho": "a;totalizando 04 (quatro) veículos reservas; 2.1.6.4 Para o Lote 4, a partir do saque do 1º veículo, deverá serdisponibilizado"}, "veiculo_referencia": {"id": 3, "marca": "Chevrolet", "modelo": "Onix Plus 1.0 Turbo", "categoria": "sedan", "ano": 2024, "motor": "1.0 Turbo 12V", "combustivel": "Flex", "potencia": "116 cv", "torque": "16,8 kgfm", "consumo": "12,5 km/l (cidade)", "tanque": "44 L", "porta_malas": "469 L", "capacidade": "5 lugares", "pneu": "195/55 R16", "fipe": 92000.0, "observacoes": "Sedã compacto usado para representação/gestão.", "garantia": "3 anos ou 100.000 km (garantia de fábrica)"}, "financeiro": {"premissas": {"desconto_montadora": 0.1, "entrada_pct": 0.2, "taxa_juros_am": 0.015, "prazo_financiamento_meses": 48, "seguro_pct_am": 0.0035, "manutencao_mensal": null, "pneus_mensal": null, "tributos_pct": 0.08, "administracao_pct": 0.05, "custos_operacionais_mensal": 80.0, "valor_residual_pct": null, "manutencao_mensal_aplicada": 380.0, "pneus_mensal_aplicado": 70.0, "valor_residual_pct_aplicado": 0.6483}, "dre": {"receita_bruta": 2350321.94, "tributos": -188025.76, "seguro": -194745.6, "manutencao": -255360.0, "pneus": -47040.0, "administracao": -117516.1, "financeiro": -493966.46, "depreciacao": -611535.96, "custos_operacionais": -53760.0, "lucro_operacional": 388372.07}, "preco_compra_unitario": 82800.0, "capital_necessario": 347760.0, "receita_mensal_unitaria": 3497.5, "receita_estimada": 2350321.94, "custo_total": 1961949.87, "margem_estimada": 0.1652, "roi": 1.1168, "payback_meses": 59.7, "tir_mensal": 0.0282, "tir_anual": 0.3956, "vpl": 140783.43, "fluxo_caixa_mensal": 5821.78, "valor_residual_total": 1127264.04, "valor_residual_unitario": 53679.24, "valor_residual_liquido_total": 549835.16, "saldo_devedor_final_total": 577428.88, "risco": "Alto", "avisos": ["Receita estimada com base em referência de mercado (não foi encontrado um valor estimado explícito no edital para este lote) — confira manualmente.", "O financiamento não estará quitado ao final do contrato: saldo devedor estimado de 27.496,61 por veículo (prazo de financiamento de 48 meses é maior que o prazo contratual de 32 meses),"]}, "alertas": ["Receita estimada com base em referência de mercado (não foi encontrado um valor estimado explícito no edital para este lote) — confira manualmente.", "O financiamento não estará quitado ao final do contrato: saldo devedor estimado de 27.496,61 por veículo (prazo de financiamento de 48 meses é maior que o prazo contratual de 32 meses),"], "pendencias": ["Confirmar franquia de KM e valor do excedente para este lote", "Confirmar prazo de entrega inicial da frota deste lote"], "decisao_participar": {"decisao": "NÃO", "motivos": ["Margem de 16.5% com risco Alto — pouco atrativo nas premissas atuais.", "2 alerta(s) identificado(s) neste lote."]}, "score": 38, "semaforo": "vermelho"}], "financeiro": {"dre": {"receita_bruta": 26301221.76, "tributos": -2104097.74, "seguro": -2118412.8, "manutencao": -2892160.0, "pneus": -539520.0, "administracao": -1315061.08, "financeiro": -5373291.48, "depreciacao": -6652194.48, "custos_operacionais": -601600.0, "lucro_operacional": 4704884.17}, "capital_investido": 3782880.0, "receita_estimada": 26301221.76, "custo_total": 21596337.59, "margem_media": 0.1789, "roi_medio": 1.1747, "payback_medio_meses": 60.6, "tir_media_anual": 0.4557, "vpl_total": 1910611.03, "valor_residual_total": 12262205.52, "valor_residual_liquido_total": 5981022.65, "saldo_devedor_final_total": 6281182.87, "reserva_tecnica_sugerida": 2159633.76}, "juridico": {"leis_aplicaveis": [{"id": 1, "nome": "Lei Complementar nº 123/2006 — Estatuto Nacional da Microempresa e EPP", "resumo": "Institui tratamento diferenciado e favorecido a Microempresas (ME) e Empresas\nde Pequeno Porte (EPP) em licitações públicas, incluindo empate ficto,\npossibilidade de exclusividade em itens de menor valor e prazos ampliados\npara regularização fiscal.", "aplicacao_pratica": "Muitos editais de locação de veículos reservam lotes ou itens de menor valor\n(até R$ 80.000,00, conforme o Decreto regulamentador) com participação\nexclusiva de ME/EPP. Se a empresa se enquadrar, é possível disputar esses\nlotes com vantagem de desempate (art. 44-45) mesmo com proposta até 5% a 10%\nacima da melhor oferta.", "pontos_importantes": "- Art. 44: empate ficto — propostas de ME/EPP até 5% (pregão) ou 10% (outras\n  modalidades) acima da melhor proposta têm direito a cobrir o lance.\n- Art. 48: possibilidade de exclusividade para itens/lotes até o limite legal.\n- Regularidade fiscal pode ser comprovada após o julgamento, com prazo para\n  regularização — atenção ao prazo do edital para não perder o lote por\n  decadência do direito.\n- Verificar se o edital citou corretamente os benefícios da LC 123/2006 —\n  omissão pode ser objeto de pedido de esclarecimento ou impugnação.", "fonte": "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp123.htm", "palavras_chave": "microempresa, epp, me, cotação exclusiva, empate ficto, simples nacional"}, {"id": 2, "nome": "Lei nº 14.133/2021 — Nova Lei de Licitações e Contratos Administrativos", "resumo": "Substitui as Leis 8.666/1993, 10.520/2002 (pregão) e parte da 12.462/2011 (RDC),\nunificando o regime de licitações e contratos da Administração Pública. Traz\nregras específicas sobre pesquisa de preços, matriz de riscos, contratação\nintegrada, reajuste/repactuação, sanções e o Portal Nacional de Contratações\nPúblicas (PNCP).", "aplicacao_pratica": "Em contratos de locação de veículos, a Lei 14.133 é a base de todo o edital:\ndefine a modalidade (pregão eletrônico é a regra para bens/serviços comuns),\nos critérios de julgamento (menor preço ou maior desconto), a exigência de\npesquisa de preços prévia (art. 23), a possibilidade de reequilíbrio\neconômico-financeiro (art. 124) e o regime de garantias contratuais (art. 96-98).", "pontos_importantes": "- Art. 6º, XLI a XLIV: conceitos de reajuste, repactuação, realinhamento.\n- Art. 23: pesquisa de preços deve considerar múltiplas fontes (não só\n  cotações de fornecedores).\n- Art. 92: cláusulas obrigatórias do contrato (prazo, garantias, sanções).\n- Art. 96-98: exigência e limites de garantia contratual (até 5% do valor).\n- Art. 124-125: reequilíbrio por álea econômica extraordinária (ex.: alta\n  abrupta de combustível ou de veículos 0km) — sempre verificar se o edital\n  prevê índice de reajuste anual (ex.: IPCA) e a data-base.\n- Art. 156: sanções administrativas (advertência, multa, impedimento,\n  declaração de inidoneidade) — analisar percentuais de multa antes de propor.", "fonte": "https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2021/lei/l14133.htm", "palavras_chave": "licitação, pregão, contrato, locação, dispensa, habilitação, edital, penalidade"}], "acordaos_relevantes": [{"id": 1, "numero": "Acórdão 1489/2018-Plenário (linha de entendimento consolidada do TCU)", "tribunal": "TCU", "tema": "Locação de veículos — franquia de quilometragem", "resumo": "O TCU tem reiterado que contratos de locação de veículos sem franquia de\nquilometragem definida (o chamado \"KM livre\") tendem a gerar sobrepreço e\ndificultam a fiscalização do uso da frota, sendo recomendável fixar franquia\nmensal compatível com a real necessidade do órgão, com regras claras para\ncobrança de KM excedente.", "aplicacao_pratica": "Ao analisar o edital, verifique se há franquia de KM definida por veículo/mês\ne o valor do KM excedente. A ausência de franquia é um ponto de risco: pode\nindicar edital mal elaborado (risco jurídico de impugnação) ou, do lado do\nlicitante, dificultar o cálculo de custo de combustível e manutenção — nesse\ncaso, recomenda-se pedir esclarecimento formal antes de propor preço.", "pontos_importantes": "- Franquia inexistente ou \"ilimitada\" é alerta de risco operacional/financeiro.\n- Valor do KM excedente deve ser compatível com custo de combustível +\n  depreciação por uso, não apenas combustível.\n- Fiscalização de KM rodado (odômetro) deve estar prevista no contrato —\n  ausência disso é uma pendência a registrar no checklist operacional.", "fonte": "TCU — jurisprudência consolidada sobre locação de veículos (Portal TCU, pesquisa \"locação de veículos franquia KM\")", "palavras_chave": "quilometragem, km livre, franquia, excedente, combustível"}, {"id": 2, "numero": "Acórdão 1445/2015-Plenário e Instrução Normativa SEGES/ME nº 65/2021", "tribunal": "TCU", "tema": "Pesquisa de preços e orçamento estimado", "resumo": "O TCU e a IN SEGES/ME 65/2021 orientam que o orçamento estimado da\nAdministração deve ser formado preferencialmente por mediana de preços\nobtidos em fontes diversas (Painel de Preços, contratações similares,\nmídias especializadas), evitando cotação isolada com fornecedores\n(que tende a inflar o preço de referência).", "aplicacao_pratica": "Compare o valor estimado do edital com o preço de mercado que você\ncalcularia para os mesmos veículos (FIPE + margem de locadora). Se o valor\nestimado do edital estiver muito abaixo do custo real (ver Financeiro do\nDashboard), o risco de inexequibilidade da própria proposta é alto — pode\nser necessário pedir esclarecimento sobre a metodologia usada no orçamento\nestimado ou fundamentar tecnicamente uma proposta acima da média, se permitido.", "pontos_importantes": "- Valor estimado muito baixo em relação ao custo real = alerta de risco.\n- Valor estimado muito alto pode indicar boa margem, mas também maior\n  concorrência e disputa de lances agressiva.\n- Sempre checar se o edital menciona a metodologia de formação do preço\n  estimado (art. 23 da Lei 14.133).", "fonte": "TCU + IN SEGES/ME 65/2021", "palavras_chave": "pesquisa de preços, orçamento estimado, sobrepreço, mediana, painel de preços"}, {"id": 3, "numero": "Jurisprudência TCU sobre álea econômica extraordinária (art. 124-125, Lei 14.133)", "tribunal": "TCU", "tema": "Reequilíbrio econômico-financeiro em contratos de locação", "resumo": "O TCU reconhece o direito ao reequilíbrio econômico-financeiro quando\neventos imprevisíveis (ou de consequências incalculáveis) alteram\nsignificativamente o custo do contrato — por exemplo, disparada no preço de\nveículos 0km, combustível ou peças. É diferente do reajuste anual por índice\n(previsível e contratual).", "aplicacao_pratica": "Verifique se o edital prevê índice de reajuste anual (ex.: IPCA, IGP-M) e se\nhá cláusula de reequilíbrio para álea extraordinária. Contratos de locação\nde veículos são sensíveis à variação cambial (componentes importados) e ao\npreço de combustível — a ausência de cláusula de reequilíbrio é um risco\nfinanceiro relevante a registrar no Dashboard.", "pontos_importantes": "- Reajuste anual (previsível) é direito automático após 12 meses da proposta.\n- Reequilíbrio extraordinário exige comprovação documental do desequilíbrio\n  (ex.: nota fiscal, tabela FIPE, índice setorial).\n- Pedido de reequilíbrio deve ser formalizado durante a vigência contratual,\n  nunca após o encerramento.", "fonte": "TCU — jurisprudência sobre equilíbrio econômico-financeiro", "palavras_chave": "reequilíbrio, álea econômica, reajuste, repactuação, combustível, ipca"}], "manuais_relevantes": [{"id": 1, "titulo": "Engenharia Financeira Aplicada à Locação de Veículos", "categoria": "manual", "resumo": "A viabilidade de um contrato de locação de veículos ao setor público depende\nde cinco variáveis centrais: capital investido (entrada + custo de aquisição),\nreceita mensal contratada, custos recorrentes (financiamento, seguro,\nmanutenção), valor residual do veículo ao final do contrato, e o prazo\ncontratual. O cruzamento dessas variáveis gera ROI, payback, TIR e VPL.", "aplicacao_pratica": "O Dashboard calcula automaticamente, por lote e de forma consolidada:\n- **Capital investido**: entrada paga na aquisição de cada veículo.\n- **ROI**: retorno total sobre o capital investido ao longo do contrato.\n- **Payback**: tempo (em meses) para o fluxo de caixa líquido cobrir o\n  capital investido.\n- **TIR**: taxa interna de retorno mensal/anual do fluxo de caixa do lote.\n- **VPL**: valor presente líquido descontado pela taxa de financiamento.\nUse o simulador do Dashboard para testar cenários (mais desconto do\nfabricante, menos entrada, prazo de financiamento maior) e ver o impacto\nimediato nesses indicadores.", "pontos_importantes": "- Payback maior que o prazo contratual é sinal de alerta grave (risco alto).\n- TIR abaixo da taxa de financiamento indica que o contrato destrói valor.\n- Valor residual subestimado penaliza o ROI; superestimado é otimismo de\n  risco — use sempre a tabela FIPE como referência conservadora.\n- Reserva técnica (sugerida em 10% do custo total) protege contra\n  imprevistos (sinistros não cobertos, atraso de pagamento do órgão).", "fonte": "Metodologia interna Rota13 — consolidação de práticas de locadoras de frota", "palavras_chave": "roi, payback, tir, vpl, capital, financiamento, residual, fluxo de caixa"}, {"id": 2, "titulo": "Gestão Contratual em Locação de Veículos", "categoria": "manual", "resumo": "Após a assinatura, a execução do contrato de locação de veículos exige rotina\nde fiscalização: controle de disponibilidade da frota, prazos de manutenção,\nsubstituição de veículos, e glosas por indisponibilidade ou descumprimento de\nSLA (nível de serviço).", "aplicacao_pratica": "No checklist operacional, mapeie: prazo de entrega inicial da frota, prazo\nmáximo para substituição em caso de pane/sinistro, obrigações de manutenção\npreventiva/corretiva, e se há glosa financeira por veículo indisponível —\nesse valor deve ser provisionado no fluxo de caixa como risco.", "pontos_importantes": "- Indisponibilidade de veículo geralmente gera desconto proporcional na\n  fatura (glosa) — verificar percentual e prazo de tolerância no edital.\n- Prazo de entrega inicial curto (ex.: 15-30 dias) é ponto crítico de risco\n  operacional para lotes grandes — pode exigir capital antecipado.\n- Reuniões periódicas de acompanhamento contratual reduzem risco de multas.", "fonte": "Boas práticas consolidadas de gestão contratual pública (AGU/SEGES)", "palavras_chave": "gestão contratual, fiscal, medição, glosa, sla, nível de serviço"}, {"id": 3, "titulo": "Gestão de Frotas para Contratos Públicos", "categoria": "manual", "resumo": "A gestão eficiente de uma frota locada ao setor público reduz custos de\nmanutenção corretiva, evita glosas por indisponibilidade e aumenta a vida\nútil (e valor residual) dos veículos, através de manutenção preventiva\nprogramada, rastreamento/telemetria e controle de consumo de combustível.", "aplicacao_pratica": "Ao planejar a operação de um lote vencido, avalie se o edital exige\nrastreamento veicular (GPS) ou telemetria — isso adiciona custo mensal por\nveículo (tipicamente R$ 30-60/mês) que deve ser incluído no custo\noperacional do lote. Programe manutenção preventiva conforme manual do\nfabricante para preservar o valor residual estimado no Dashboard.", "pontos_importantes": "- Exigência de rastreamento/GPS não parametrizada no edital como item\n  separado deve ser embutida no custo de manutenção mensal.\n- Manutenção preventiva em dia impacta diretamente o valor residual real\n  (vs. o estimado) e o risco de multa por indisponibilidade.\n- Consumo de combustível fora do padrão pode indicar mau uso da frota —\n  relevante se o contrato incluir fornecimento de combustível.", "fonte": "Boas práticas de gestão de frotas corporativas — consolidação geral", "palavras_chave": "frota, manutenção preventiva, telemetria, rastreamento, combustível, gestão"}, {"id": 4, "titulo": "Manual de Boas Práticas Contratuais — Orientações da AGU", "categoria": "manual", "resumo": "A AGU publica manuais e pareceres normativos orientando órgãos federais sobre\nelaboração de editais, cláusulas contratuais, fiscalização e aplicação de\nsanções. Para contratos de locação de veículos, os pontos mais relevantes são\na definição clara do fiscal/gestor do contrato, a matriz de riscos e as\ncondições de rescisão.", "aplicacao_pratica": "No checklist jurídico, verifique se o edital define claramente: (1) quem\nfiscaliza o contrato e como; (2) a matriz de riscos (o que é risco da\nAdministração x risco da contratada); (3) as hipóteses de rescisão unilateral\ne suas consequências financeiras (ex.: devolução de veículos, multas).", "pontos_importantes": "- Ausência de matriz de riscos é uma lacuna comum — pode gerar disputas sobre\n  quem arca com sinistros, multas de trânsito de terceiros ou deterioração.\n- Cláusula de rescisão unilateral pela Administração deve prever prazo de\n  notificação e forma de devolução dos veículos sem prejuízo desproporcional.\n- Garantia contratual (art. 96-98 da Lei 14.133) deve ser dimensionada\n  considerando o capital investido na frota.", "fonte": "Advocacia-Geral da União — Manuais de licitações e contratos administrativos", "palavras_chave": "fiscalização, gestor de contrato, sanção, garantia, rescisão, agu"}], "checklist_juridico": ["Conferir se há franquia de KM definida e valor do KM excedente", "Conferir índice de reajuste anual e cláusula de reequilíbrio (art. 124-125, Lei 14.133)", "Conferir matriz de riscos e responsabilidade por sinistros", "Conferir exigência de veículo reserva/substituto e prazo de substituição", "Conferir percentual de multa e hipóteses de rescisão unilateral", "Conferir garantia contratual exigida (art. 96-98, Lei 14.133)", "Conferir benefícios de ME/EPP aplicáveis (LC 123/2006), se houver"], "itens_esclarecimento": ["Solicitar esclarecimento sobre metodologia da pesquisa de preços, se não estiver explícita", "Solicitar esclarecimento sobre franquia de KM, se omissa no edital", "Solicitar esclarecimento sobre índice de reajuste, se não previsto"], "achados": [{"analise": "Não foi localizada menção explícita a franquia de quilometragem. Isso pode indicar \"KM livre\" (risco de sobrecusto) ou apenas ausência de detalhamento no texto disponível — recomenda-se confirmar diretamente no edital.", "severidade": "media", "pagina": null, "trecho": null}, {"analise": "Cláusula de reajuste/reequilíbrio identificada — confira o índice usado (ex.: IPCA, IGP-M) e a periodicidade.", "severidade": "baixa", "pagina": 29, "trecho": "inda, de modificação do preço registrado em decorrência de reajustamento, repactuação ou alteração, poderá ser procedida à reorgani"}, {"analise": "Edital exige comprovação de balanço patrimonial/capital social/patrimônio líquido mínimo para habilitação — confirme se a empresa atende ao requisito antes de investir tempo na proposta.", "severidade": "media", "pagina": 47, "trecho": "(um), comprovados mediante aapresentação pelo licitante de balanço patrimonial, demonstração de resultado de exercício e demais demonstraç"}]}, "operacional": {"veiculos": [{"lote": 9, "categoria": "van", "referencia": {"id": 11, "marca": "Fiat", "modelo": "Fiorino Furgão 1.4", "categoria": "van", "ano": 2024, "motor": "1.4 Fire Flex", "combustivel": "Flex", "potencia": "88 cv", "torque": "12,7 kgfm", "consumo": "11,5 km/l (cidade)", "tanque": "48 L", "porta_malas": "1200 L (carga)", "capacidade": "2 lugares + carga", "pneu": "175/70 R13", "fipe": 82000.0, "observacoes": "Furgão leve para transporte de materiais e saúde (insumos).", "garantia": "3 anos, km ilimitado (garantia de fábrica)"}, "quantidade": 1, "valor_residual_unitario": 47844.54}, {"lote": 1, "categoria": "suv", "referencia": {"id": 10, "marca": "Renault", "modelo": "Duster Zen 1.6", "categoria": "suv", "ano": 2024, "motor": "1.6 16V Flex", "combustivel": "Flex", "potencia": "120 cv", "torque": "16,4 kgfm", "consumo": "11,2 km/l (cidade)", "tanque": "50 L", "porta_malas": "445 L", "capacidade": "5 lugares", "pneu": "215/65 R16", "fipe": 105000.0, "observacoes": "SUV com boa relação custo-benefício para zona rural.", "garantia": "3 anos ou 100.000 km (garantia de fábrica)"}, "quantidade": 2, "valor_residual_unitario": 61264.35}, {"lote": 2, "categoria": "sedan", "referencia": {"id": 3, "marca": "Chevrolet", "modelo": "Onix Plus 1.0 Turbo", "categoria": "sedan", "ano": 2024, "motor": "1.0 Turbo 12V", "combustivel": "Flex", "potencia": "116 cv", "torque": "16,8 kgfm", "consumo": "12,5 km/l (cidade)", "tanque": "44 L", "porta_malas": "469 L", "capacidade": "5 lugares", "pneu": "195/55 R16", "fipe": 92000.0, "observacoes": "Sedã compacto usado para representação/gestão.", "garantia": "3 anos ou 100.000 km (garantia de fábrica)"}, "quantidade": 180, "valor_residual_unitario": 53679.24}, {"lote": 3, "categoria": "nao_especificado", "referencia": {"id": 1, "marca": "Chevrolet", "modelo": "Onix Joy 1.0", "categoria": "hatch", "ano": 2024, "motor": "1.0 12V", "combustivel": "Flex", "potencia": "80 cv", "torque": "10,8 kgfm", "consumo": "14,5 km/l (cidade)", "tanque": "44 L", "porta_malas": "265 L", "capacidade": "5 lugares", "pneu": "175/70 R14", "fipe": 72000.0, "observacoes": "Veículo popular mais usado em frotas administrativas.", "garantia": "3 anos ou 100.000 km (garantia de fábrica)"}, "quantidade": 31, "valor_residual_unitario": 42009.84}, {"lote": 4, "categoria": "sedan", "referencia": {"id": 3, "marca": "Chevrolet", "modelo": "Onix Plus 1.0 Turbo", "categoria": "sedan", "ano": 2024, "motor": "1.0 Turbo 12V", "combustivel": "Flex", "potencia": "116 cv", "torque": "16,8 kgfm", "consumo": "12,5 km/l (cidade)", "tanque": "44 L", "porta_malas": "469 L", "capacidade": "5 lugares", "pneu": "195/55 R16", "fipe": 92000.0, "observacoes": "Sedã compacto usado para representação/gestão.", "garantia": "3 anos ou 100.000 km (garantia de fábrica)"}, "quantidade": 21, "valor_residual_unitario": 53679.24}], "prazo_entrega": "Prazo de entrega não identificado no texto — confirmar diretamente no edital.", "manutencao": "Preventiva conforme manual do fabricante + corretiva sob demanda, sem custo adicional ao órgão.", "seguro": "Cobertura compreensiva (colisão, roubo/furto, incêndio) + RCF terceiros, conforme exigência do edital.", "documentacao": ["CRLV em dia", "Licenciamento anual", "IPVA quitado", "Comprovante de seguro vigente"], "exigencias": ["Frota nova ou com idade máxima conforme edital", "Substituição de veículo em pane dentro do prazo definido", "Identificação visual conforme exigência do órgão (se aplicável)"], "checklist_operacional": ["Confirmar disponibilidade de frota compatível com o prazo de entrega exigido", "Confirmar capacidade de manutenção/suporte na região do órgão", "Confirmar cobertura de seguro compatível com a exigência do edital", "Confirmar documentação da frota (CRLV, licenciamento, IPVA) antes da entrega"]}, "checklist_pratico": ["Confirmar franquia de KM e valor do KM excedente diretamente no edital", "Confirmar exigências específicas de seguro (cobertura, franquia)", "Conferir prazo de entrega inicial da frota", "Solicitar cotação para o Lote 9 (van): Fiat, Renault", "Solicitar cotação para o Lote 1 (suv): Renault, Jeep", "Solicitar cotação para o Lote 2 (sedan): Chevrolet, Toyota", "Solicitar cotação para o Lote 4 (sedan): Chevrolet, Toyota", "Não foi localizada menção explícita a franquia de quilometragem", "Edital exige comprovação de balanço patrimonial/capital social/patrimônio líquido mínimo para habilitação"], "timeline": [{"fase": "Publicação do edital", "info": "publicado no D", "identificado": true}, {"fase": "Pedidos de esclarecimento", "info": "esclarecimentos e impugnação no prazo de até 03", "identificado": true}, {"fase": "Impugnações", "info": "impugnação no prazo de até 03", "identificado": true}, {"fase": "Sessão pública", "info": "sessão pública da", "identificado": true}, {"fase": "Homologação", "info": "homologação", "identificado": true}, {"fase": "Assinatura do contrato", "info": "assinatura do contrato ou da ata de registro de preços, os documentos de que trata este", "identificado": true}, {"fase": "Entrega da frota", "info": "prazo de entrega de até 30(trinta) dias da expedição da ordem de fornecimento; (item 3, inc", "identificado": true}, {"fase": "Reajuste contratual", "info": "reajustamento, repactuação ou alteração, poderá ser", "identificado": true}, {"fase": "Encerramento do contrato", "info": "vigência do contrato ou da ata de registro de preços, a Administração poderá,", "identificado": true}], "confianca_extracao": {"percentual": 95, "campos_encontrados": ["Órgão licitante", "Número do processo/pregão", "Objeto do edital", "Prazo contratual", "Valor estimado"], "campos_pendentes": [], "campos_revisados": ["Valor estimado (não veio de um rótulo explícito no texto)"], "motor": "regex"}, "market_intelligence": {"disponivel": false, "mensagem": "Benchmark de Mercado disponível na Versão 2."}, "simulacao_base": {"parametros_padrao": {"desconto_montadora": 0.1, "entrada_pct": 0.2, "taxa_juros_am": 0.015, "prazo_financiamento_meses": 48, "seguro_pct_am": 0.0035, "manutencao_mensal": null, "pneus_mensal": null, "tributos_pct": 0.08, "administracao_pct": 0.05, "custos_operacionais_mensal": 80.0, "valor_residual_pct": null}, "prazo_contratual_meses": 32}}</script>
+<script>
+const ANALISE = JSON.parse(document.getElementById('analise-data').textContent);
+const LOTES = ANALISE.lotes;
+
+function brl(v){
+  if(v===null||v===undefined||isNaN(v)) return '—';
+  const neg = v<0; v = Math.abs(v);
+  return (neg?'-':'') + 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function pct(v){ return (v===null||v===undefined||isNaN(v)) ? 'Não calculado' : (v*100).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+'%'; }
+function meses(v){ return (v===null||v===undefined||isNaN(v)) ? 'Não calculado' : v.toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1})+' meses'; }
+
+function pmt(taxa, nper, pv){
+  if(nper<=0) return 0;
+  if(taxa===0) return pv/nper;
+  return pv*taxa/(1-Math.pow(1+taxa,-nper));
+}
+function amortizacaoPrice(taxa, nperFinanciamento, pv, mesesPeriodo){
+  const parcela = pmt(taxa, nperFinanciamento, pv);
+  let saldo = pv, jurosTotal = 0;
+  const meses = Math.max(0, Math.min(mesesPeriodo, nperFinanciamento));
+  for(let i=0;i<meses;i++){
+    const jurosMes = saldo*taxa;
+    const principalMes = parcela - jurosMes;
+    saldo = Math.max(0, saldo - principalMes);
+    jurosTotal += jurosMes;
+  }
+  return {parcela, jurosTotal, saldoFinal: saldo};
+}
+function npv(taxa, fluxos){
+  let s=0;
+  for(let t=0;t<fluxos.length;t++) s += fluxos[t]/Math.pow(1+taxa,t);
+  return s;
+}
+function irr(fluxos){
+  let baixo=-0.9, alto=3.0;
+  if(npv(baixo,fluxos)*npv(alto,fluxos) > 0) return null;
+  let meio=0;
+  for(let i=0;i<200;i++){
+    meio=(baixo+alto)/2;
+    const v = npv(meio, fluxos);
+    if(Math.abs(v) < 1e-6) return meio;
+    if(npv(baixo,fluxos)*v < 0) alto = meio; else baixo = meio;
+  }
+  return meio;
+}
+
+function calcularLote(lote, params){
+  const quantidade = Math.max(1, lote.quantidade);
+  const fipe = (lote.veiculo_referencia && lote.veiculo_referencia.fipe) || 80000;
+  const prazoMeses = ANALISE.simulacao_base.prazo_contratual_meses;
+
+  const precoCompra = fipe * (1 - params.desconto);
+  const capitalNecessario = precoCompra * params.entrada * quantidade;
+
+  const receitaMensalUnit = lote.financeiro.receita_mensal_unitaria;
+  const receitaBrutaTotal = receitaMensalUnit * quantidade * prazoMeses;
+
+  const tributosMensalUnit = receitaMensalUnit * params.tributos;
+  const seguroMensalUnit = precoCompra * params.seguro;
+  const administracaoMensalUnit = receitaMensalUnit * params.administracao;
+  const valorFinanciado = precoCompra * (1 - params.entrada);
+  const amort = amortizacaoPrice(params.juros, params.prazofin, valorFinanciado, prazoMeses);
+  const parcelaMensalUnit = amort.parcela;       // desembolso de caixa cheio
+  const jurosTotalUnit = amort.jurosTotal;       // só juros vira despesa de DRE
+  const saldoDevedorFinalUnit = amort.saldoFinal;
+
+  const valorResidualUnit = precoCompra * params.residual;
+  const depreciacaoMensalUnit = prazoMeses>0 ? (precoCompra - valorResidualUnit) / prazoMeses : 0;
+
+  const tributosTotal = tributosMensalUnit * quantidade * prazoMeses;
+  const seguroTotal = seguroMensalUnit * quantidade * prazoMeses;
+  const manutencaoTotal = params.manutencao * quantidade * prazoMeses;
+  const pneusTotal = params.pneus * quantidade * prazoMeses;
+  const administracaoTotal = administracaoMensalUnit * quantidade * prazoMeses;
+  const financeiroTotal = jurosTotalUnit * quantidade;
+  const depreciacaoTotal = depreciacaoMensalUnit * quantidade * prazoMeses;
+  const custosOpTotal = params.custosop * quantidade * prazoMeses;
+
+  const lucroOperacional = receitaBrutaTotal - tributosTotal - seguroTotal - manutencaoTotal
+    - pneusTotal - administracaoTotal - financeiroTotal - depreciacaoTotal - custosOpTotal;
+  const margem = receitaBrutaTotal>0 ? lucroOperacional/receitaBrutaTotal : null;
+
+  const fluxoCaixaMensal = (receitaMensalUnit - tributosMensalUnit - seguroMensalUnit - params.manutencao
+    - params.pneus - administracaoMensalUnit - parcelaMensalUnit - params.custosop) * quantidade;
+  const valorResidualTotal = valorResidualUnit * quantidade;
+  const saldoDevedorFinalTotal = saldoDevedorFinalUnit * quantidade;
+  const valorResidualLiquidoTotal = valorResidualTotal - saldoDevedorFinalTotal;
+
+  let payback = null;
+  if(capitalNecessario>0 && fluxoCaixaMensal>0) payback = capitalNecessario/fluxoCaixaMensal;
+
+  let roi = null;
+  if(capitalNecessario>0) roi = (fluxoCaixaMensal*prazoMeses + valorResidualLiquidoTotal - capitalNecessario)/capitalNecessario;
+
+  let tirAnual = null, vpl = null;
+  if(capitalNecessario>0){
+    const fluxos = [-capitalNecessario];
+    for(let i=0;i<prazoMeses;i++) fluxos.push(fluxoCaixaMensal);
+    fluxos[fluxos.length-1] += valorResidualLiquidoTotal;
+    const tirMensal = irr(fluxos);
+    tirAnual = tirMensal!==null ? Math.pow(1+tirMensal,12)-1 : null;
+    vpl = npv(params.juros, fluxos);
+  }
+
+  return {capitalNecessario, receitaBrutaTotal, lucroOperacional, margem, roi, payback, tirAnual, vpl};
+}
+
+const els = {
+  lote: document.getElementById('sim-lote'),
+  desconto: document.getElementById('p-desconto'), vDesconto: document.getElementById('v-desconto'),
+  entrada: document.getElementById('p-entrada'), vEntrada: document.getElementById('v-entrada'),
+  juros: document.getElementById('p-juros'), vJuros: document.getElementById('v-juros'),
+  prazofin: document.getElementById('p-prazofin'), vPrazofin: document.getElementById('v-prazofin'),
+  seguro: document.getElementById('p-seguro'), vSeguro: document.getElementById('v-seguro'),
+  manutencao: document.getElementById('p-manutencao'), vManutencao: document.getElementById('v-manutencao'),
+  pneus: document.getElementById('p-pneus'), vPneus: document.getElementById('v-pneus'),
+  tributos: document.getElementById('p-tributos'), vTributos: document.getElementById('v-tributos'),
+  administracao: document.getElementById('p-administracao'), vAdministracao: document.getElementById('v-administracao'),
+  custosop: document.getElementById('p-custosop'), vCustosop: document.getElementById('v-custosop'),
+  residual: document.getElementById('p-residual'), vResidual: document.getElementById('v-residual'),
+};
+
+function paramsParaLote(lote){
+  const p = ANALISE.simulacao_base.parametros_padrao;
+  const premissas = lote.financeiro.premissas;
+  return {
+    desconto: p.desconto_montadora, entrada: p.entrada_pct, juros: p.taxa_juros_am,
+    prazofin: p.prazo_financiamento_meses, seguro: p.seguro_pct_am,
+    manutencao: premissas.manutencao_mensal_aplicada, pneus: premissas.pneus_mensal_aplicado,
+    tributos: p.tributos_pct, administracao: p.administracao_pct,
+    custosop: p.custos_operacionais_mensal, residual: premissas.valor_residual_pct_aplicado
+  };
+}
+
+function setSliders(p){
+  els.desconto.value=p.desconto; els.entrada.value=p.entrada; els.juros.value=p.juros;
+  els.prazofin.value=p.prazofin; els.seguro.value=p.seguro; els.manutencao.value=p.manutencao;
+  els.pneus.value=p.pneus; els.tributos.value=p.tributos; els.administracao.value=p.administracao;
+  els.custosop.value=p.custosop; els.residual.value=p.residual;
+}
+
+function lerParams(){
+  return {
+    desconto: parseFloat(els.desconto.value), entrada: parseFloat(els.entrada.value),
+    juros: parseFloat(els.juros.value), prazofin: parseInt(els.prazofin.value),
+    seguro: parseFloat(els.seguro.value), manutencao: parseFloat(els.manutencao.value),
+    pneus: parseFloat(els.pneus.value), tributos: parseFloat(els.tributos.value),
+    administracao: parseFloat(els.administracao.value), custosop: parseFloat(els.custosop.value),
+    residual: parseFloat(els.residual.value)
+  };
+}
+
+function atualizarLabels(p){
+  els.vDesconto.textContent=pct(p.desconto); els.vEntrada.textContent=pct(p.entrada);
+  els.vJuros.textContent=pct(p.juros); els.vPrazofin.textContent=p.prazofin+' meses';
+  els.vSeguro.textContent=pct(p.seguro); els.vManutencao.textContent=brl(p.manutencao);
+  els.vPneus.textContent=brl(p.pneus); els.vTributos.textContent=pct(p.tributos);
+  els.vAdministracao.textContent=pct(p.administracao); els.vCustosop.textContent=brl(p.custosop);
+  els.vResidual.textContent=pct(p.residual);
+}
+
+function recalcular(){
+  const numero = parseInt(els.lote.value);
+  const lote = LOTES.find(l => l.numero === numero);
+  const p = lerParams();
+  atualizarLabels(p);
+  const res = calcularLote(lote, p);
+  document.getElementById('r-capital').textContent = brl(res.capitalNecessario);
+  document.getElementById('r-receita').textContent = brl(res.receitaBrutaTotal);
+  document.getElementById('r-lucro').textContent = brl(res.lucroOperacional);
+  document.getElementById('r-margem').textContent = pct(res.margem);
+  document.getElementById('r-roi').textContent = pct(res.roi);
+  document.getElementById('r-payback').textContent = meses(res.payback);
+  document.getElementById('r-tir').textContent = pct(res.tirAnual);
+  document.getElementById('r-vpl').textContent = brl(res.vpl);
+}
+
+['desconto','entrada','juros','prazofin','seguro','manutencao','pneus','tributos','administracao','custosop','residual'].forEach(k=>{
+  els[k].addEventListener('input', recalcular);
+});
+els.lote.addEventListener('change', () => {
+  const lote = LOTES.find(l => l.numero === parseInt(els.lote.value));
+  setSliders(paramsParaLote(lote));
+  recalcular();
+});
+
+setSliders(paramsParaLote(LOTES[0]));
+recalcular();
+</script>
+</body>
+</html>
