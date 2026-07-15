@@ -13,7 +13,6 @@ impressa no console a cada início.
 import html
 import json
 import os
-import queue
 import secrets
 import socket
 import threading
@@ -38,30 +37,39 @@ _sessoes_validas = {}  # token -> expira_em (epoch seconds)
 
 
 class _Job:
-    """Acompanha o progresso de uma análise rodando em background, para que o
-    navegador possa exibir cada etapa em tempo real via Server-Sent Events."""
+    """Acompanha o progresso de uma análise rodando em background. O navegador
+    consulta o status por polling (GET /status/<id> a cada ~1,5s) em vez de
+    manter uma conexão de streaming aberta — proxies (ex.: o do Codespaces)
+    costumam derrubar conexões de streaming (SSE), então polling simples é
+    o mecanismo que funciona de forma confiável atrás de qualquer proxy."""
 
     def __init__(self, nome_arquivo: str):
         self.nome_arquivo = nome_arquivo
-        self.eventos = queue.Queue()
+        self.historico = []
         self.status = "processando"  # processando | concluido | erro
         self.resultado_html = None
         self.erro = None
         self.criado_em = time.time()
+        self._lock = threading.Lock()
 
     def log(self, mensagem: str):
         print(f"   {mensagem}")
-        self.eventos.put(mensagem)
+        with self._lock:
+            self.historico.append(mensagem)
 
     def concluir(self, resultado_html: str):
         self.resultado_html = resultado_html
-        self.status = "concluido"
-        self.eventos.put(None)
+        with self._lock:
+            self.status = "concluido"
 
     def falhar(self, erro: str):
         self.erro = erro
-        self.status = "erro"
-        self.eventos.put(None)
+        with self._lock:
+            self.status = "erro"
+
+    def snapshot(self) -> dict:
+        with self._lock:
+            return {"historico": list(self.historico), "status": self.status, "erro": self.erro}
 
 
 _jobs = {}  # job_id -> _Job
@@ -188,27 +196,33 @@ def _pagina_progresso(job_id: str, nome_arquivo: str) -> bytes:
     <script>
       const logEl = document.getElementById('log');
       const linhas = [];
+      let indiceVisto = 0;
       function render(){{ logEl.innerHTML = linhas.map(l => '<div class="linha">'+l+'</div>').join(''); logEl.scrollTop = logEl.scrollHeight; }}
-      const es = new EventSource('/progresso/{job_id}');
-      es.onmessage = (e) => {{
-        const dados = JSON.parse(e.data);
-        linhas.push(dados.msg.replace(/</g,'&lt;'));
-        render();
-      }};
-      es.addEventListener('done', (e) => {{
-        es.close();
-        window.location = '/resultado/{job_id}';
-      }});
-      es.addEventListener('erro', (e) => {{
-        es.close();
-        const dados = JSON.parse(e.data);
-        document.querySelector('.spinner').style.display='none';
-        const erroEl = document.getElementById('msg-erro');
-        erroEl.textContent = dados.erro;
-        erroEl.style.display='block';
-        document.getElementById('link-voltar').style.display='block';
-      }});
-      es.onerror = () => {{ /* conexão caiu; navegador tenta reconectar automaticamente */ }};
+
+      function consultar(){{
+        fetch('/status/{job_id}')
+          .then(r => r.json())
+          .then(dados => {{
+            for(let i = indiceVisto; i < dados.historico.length; i++){{
+              linhas.push(dados.historico[i].replace(/</g,'&lt;'));
+            }}
+            indiceVisto = dados.historico.length;
+            render();
+            if(dados.status === 'concluido'){{
+              window.location = '/resultado/{job_id}';
+            }} else if(dados.status === 'erro'){{
+              document.querySelector('.spinner').style.display = 'none';
+              const erroEl = document.getElementById('msg-erro');
+              erroEl.textContent = dados.erro;
+              erroEl.style.display = 'block';
+              document.getElementById('link-voltar').style.display = 'block';
+            }} else {{
+              setTimeout(consultar, 1500);
+            }}
+          }})
+          .catch(() => setTimeout(consultar, 2500)); // proxy instável: tenta de novo
+      }}
+      consultar();
     </script>
     """
     return _pagina(corpo, "Rota13 — Analisando...")
@@ -318,43 +332,25 @@ def _make_handler():
                 if not self._autenticado():
                     return self._redirect("/")
                 return self._servir_arquivo_historico(path)
-            if path.startswith("/progresso/"):
+            if path.startswith("/status/"):
                 if not self._autenticado():
                     return self._redirect("/")
-                return self._stream_progresso(path[len("/progresso/"):])
+                return self._status_job(path[len("/status/"):])
             if path.startswith("/resultado/"):
                 if not self._autenticado():
                     return self._redirect("/")
                 return self._servir_resultado(path[len("/resultado/"):])
             self._enviar(b"Nao encontrado", status=404)
 
-        def _stream_progresso(self, job_id):
+        def _status_job(self, job_id):
             job = _jobs.get(job_id)
             if job is None:
-                return self._enviar(b"Job nao encontrado", status=404)
-
-            self.close_connection = True
-            self.send_response(200)
-            self.send_header("Content-Type", "text/event-stream")
-            self.send_header("Cache-Control", "no-cache")
-            self.send_header("Connection", "keep-alive")
-            self.end_headers()
-            try:
-                while True:
-                    msg = job.eventos.get()
-                    if msg is None:
-                        if job.status == "erro":
-                            payload = json.dumps({"erro": job.erro}, ensure_ascii=False)
-                            self.wfile.write(f"event: erro\ndata: {payload}\n\n".encode("utf-8"))
-                        else:
-                            self.wfile.write(b"event: done\ndata: {}\n\n")
-                        self.wfile.flush()
-                        break
-                    payload = json.dumps({"msg": msg}, ensure_ascii=False)
-                    self.wfile.write(f"data: {payload}\n\n".encode("utf-8"))
-                    self.wfile.flush()
-            except (BrokenPipeError, ConnectionResetError):
-                pass
+                return self._enviar(
+                    json.dumps({"historico": [], "status": "erro", "erro": "Job não encontrado."}).encode("utf-8"),
+                    status=404, content_type="application/json; charset=utf-8",
+                )
+            payload = json.dumps(job.snapshot(), ensure_ascii=False).encode("utf-8")
+            return self._enviar(payload, content_type="application/json; charset=utf-8")
 
         def _servir_resultado(self, job_id):
             job = _jobs.get(job_id)
