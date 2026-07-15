@@ -35,7 +35,7 @@ MAX_SEGMENTOS_IA = 8
 
 CATEGORIAS_VALIDAS = [
     "hatch", "sedan", "suv", "pickup", "van", "onibus", "caminhao",
-    "ambulancia", "hibrido", "nao_especificado",
+    "ambulancia", "hibrido_phev", "hibrido_hev", "nao_especificado",
 ]
 
 FERRAMENTAS = [
@@ -73,7 +73,7 @@ APENAS um JSON válido, sem nenhum texto antes ou depois, com esta estrutura exa
   "valor_estimado": {"valor": <número, em reais, sem R$ nem separador de milhar>, "pagina": <int>, "trecho": "..."},
   "lotes": [
     {"numero": <inteiro>, "descricao": "...", "quantidade": <inteiro>,
-     "categoria_veiculo": "hatch|sedan|suv|pickup|van|onibus|caminhao|ambulancia|hibrido|nao_especificado",
+     "categoria_veiculo": "hatch|sedan|suv|pickup|van|onibus|caminhao|ambulancia|hibrido_phev|hibrido_hev|nao_especificado",
      "pagina": <int>, "trecho": "..."}
   ],
   "riscos_juridicos_identificados": ["lista curta de riscos/cláusulas críticas, cada uma citando a página"]

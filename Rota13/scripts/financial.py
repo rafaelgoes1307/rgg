@@ -27,7 +27,8 @@ PARAMS_PADRAO = {
     "desconto_montadora": 0.15,        # mínimo de 15% de desconto sobre a FIPE na compra (piso de negociação)
     "entrada_pct": 0.0,                # premissa: 100% financiado pelo banco, sem entrada própria
     "taxa_juros_am": 0.015,            # 1,5% a.m. no financiamento
-    "prazo_financiamento_meses": None,  # None = acompanha o prazo do contrato (ver compute_lote_financials)
+    "prazo_financiamento_meses": 48,   # prazo comum de financiamento de veículos no Brasil; pode ser maior
+                                        # que o prazo do contrato — nesse caso o aviso de saldo devedor final avisa
     "seguro_pct_am": 0.0035,           # 0,35% a.m. do valor do veículo
     "manutencao_mensal": None,         # None = usa tabela por categoria
     "pneus_mensal": None,              # None = usa tabela por categoria
@@ -60,13 +61,13 @@ def valor_residual_padrao(prazo_meses: int, taxa_anual: float = TAXA_DEPRECIACAO
 MANUTENCAO_POR_CATEGORIA = {
     "hatch": 300.0, "sedan": 380.0, "suv": 450.0, "pickup": 550.0,
     "van": 700.0, "onibus": 1200.0, "caminhao": 900.0, "ambulancia": 900.0,
-    "hibrido": 420.0, "nao_especificado": 400.0,
+    "hibrido_phev": 480.0, "hibrido_hev": 420.0, "nao_especificado": 400.0,
 }
 
 PNEUS_POR_CATEGORIA = {
     "hatch": 60.0, "sedan": 70.0, "suv": 90.0, "pickup": 110.0,
     "van": 130.0, "onibus": 250.0, "caminhao": 200.0, "ambulancia": 130.0,
-    "hibrido": 80.0, "nao_especificado": 80.0,
+    "hibrido_phev": 90.0, "hibrido_hev": 80.0, "nao_especificado": 80.0,
 }
 
 

@@ -23,7 +23,12 @@ CATEGORIAS_VEICULO = {
     "onibus": ["ônibus", "micro-ônibus", "microônibus"],
     "caminhao": ["caminhão", "caminhao", "basculante", "baú"],
     "ambulancia": ["ambulância", "ambulancia"],
-    "hibrido": ["híbrido", "hibrido", "hybrid", "hev", "phev"],
+    # PHEV (plug-in, recarrega na tomada) e HEV (híbrido convencional, não
+    # recarrega na tomada) são motorizações diferentes — custo, autonomia
+    # elétrica e disponibilidade de mercado não são as mesmas. Nunca tratar
+    # como a mesma categoria.
+    "hibrido_phev": ["phev", "plug-in", "plugin", "hibrido plug-in", "híbrido plug-in"],
+    "hibrido_hev": ["hev", "híbrido", "hibrido", "hybrid"],
 }
 
 
@@ -176,8 +181,17 @@ def extract_valor_estimado(texto: str, offsets: list):
 
 def detectar_categoria(descricao: str) -> str:
     desc = descricao.lower()
+    # Motorização (híbrido) é verificada antes de carroceria: "SUV PHEV"
+    # precisa cair em "hibrido_phev" (restringe a base a veículos com a
+    # motorização certa), não em "suv" genérico (pegaria qualquer SUV comum,
+    # mais barato e fora de especificação). PHEV é checado antes de HEV
+    # porque "híbrido plug-in" também contém a palavra "híbrido".
+    if any(p in desc for p in CATEGORIAS_VEICULO["hibrido_phev"]):
+        return "hibrido_phev"
+    if any(p in desc for p in CATEGORIAS_VEICULO["hibrido_hev"]):
+        return "hibrido_hev"
     for categoria, palavras in CATEGORIAS_VEICULO.items():
-        if any(p in desc for p in palavras):
+        if categoria not in ("hibrido_phev", "hibrido_hev") and any(p in desc for p in palavras):
             return categoria
     return "nao_especificado"
 
