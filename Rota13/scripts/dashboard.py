@@ -63,7 +63,8 @@ DECISAO_LOTE_CLASSE = {"SIM": "ok", "TALVEZ": "warn", "NÃO": "bad"}
 CATEGORIA_LABEL = {
     "hatch": "Hatch", "sedan": "Sedã", "suv": "SUV", "pickup": "Picape",
     "van": "Van/Furgão", "onibus": "Ônibus/Micro-ônibus", "caminhao": "Caminhão",
-    "ambulancia": "Ambulância", "hibrido_phev": "Híbrido Plug-in (PHEV)", "hibrido_hev": "Híbrido (HEV)", "nao_especificado": "Não especificado",
+    "ambulancia": "Ambulância", "hibrido_phev": "Híbrido Plug-in (PHEV)", "hibrido_hev": "Híbrido (HEV)",
+    "eletrico": "100% Elétrico (BEV)", "nao_especificado": "Não especificado",
 }
 
 DRE_LABELS = [

@@ -524,7 +524,7 @@
   {
     "marca": "BYD",
     "modelo": "Dolphin Mini",
-    "categoria": "hibrido_phev",
+    "categoria": "eletrico",
     "ano": 2026,
     "motor": "Motor elétrico dianteiro",
     "combustivel": "Elétrico (100% a bateria)",
@@ -537,7 +537,7 @@
     "pneu": "185/65 R15",
     "fipe": 119990,
     "garantia": "6 anos ou 150.000 km (veículo) / 8 anos (bateria)",
-    "observacoes": "100% elétrico (não é híbrido, mas listado na mesma categoria por falta de bucket próprio de BEV) — hatch compacto, baixíssimo custo de manutenção. Preço 2026 real (Webmotors)."
+    "observacoes": "100% elétrico hatch compacto, baixíssimo custo de manutenção. Preço 2026 real (Webmotors)."
   },
   {
     "marca": "Nissan",
