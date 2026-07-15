@@ -52,7 +52,7 @@ def _indicador(valor, formatador, avisos: list, palavra_chave: str) -> str:
     return "Não calculado por falta de informações."
 
 
-DECISAO_CLASSE = {"GO": "ok", "GO COM RESSALVAS": "warn", "NO GO": "bad"}
+DECISAO_CLASSE = {"GO": "ok", "GO COM RESSALVAS": "warn", "NO GO": "bad", "ANÁLISE PENDENTE": "warn"}
 RISCO_CLASSE = {"Baixo": "ok", "Médio": "warn", "Alto": "bad"}
 COR_CLASSE = {"verde": "ok", "amarelo": "warn", "vermelho": "bad"}
 COR_EMOJI = {"verde": "🟢", "amarelo": "🟡", "vermelho": "🔴"}
@@ -81,6 +81,8 @@ DRE_LABELS = [
 
 
 def _svg_gauge(score: float, cor_classe: str) -> str:
+    if score is None:
+        return '''<div class="gauge-indisponivel"><strong>—</strong><span>Score bloqueado</span></div>'''
     raio = 54
     circ = 2 * 3.14159265 * raio
     frac = max(0, min(score, 100)) / 100
@@ -167,6 +169,12 @@ def _card_lote(lote: dict, prazo_meses: int) -> str:
     payback_txt = _indicador(fin["payback_meses"], _meses, fin["avisos"], "payback")
     roi_txt = _indicador(fin["roi"], _pct, fin["avisos"], "roi")
     tir_txt = _indicador(fin["tir_anual"], _pct, fin["avisos"], "tir")
+    fonte = lote.get("fonte") or {}
+    evidencia_html = (
+        f'<p class="doc-fonte">Evidência: página {fonte["pagina"]} — "{fonte.get("trecho", "")}"</p>'
+        if fonte.get("pagina") else
+        '<p class="doc-fonte">Evidência do lote não confirmada — revise o TR.</p>'
+    )
 
     return f'''
     <div class="card lote-card">
@@ -175,6 +183,7 @@ def _card_lote(lote: dict, prazo_meses: int) -> str:
         <span class="badge {decisao_classe}">Participar? {dp["decisao"]}</span>
       </div>
       <p class="lote-desc">{lote["descricao"]}</p>
+      {evidencia_html}
       <div class="lote-meta">
         <span>🚗 {_num(lote["quantidade"])} veículo(s)</span>
         <span>🏷️ {CATEGORIA_LABEL.get(lote["categoria_veiculo"], lote["categoria_veiculo"])}</span>
@@ -268,6 +277,17 @@ def _semaforo_html(semaforo: dict) -> str:
     return "".join(itens)
 
 
+def _validacao_html(validacao: dict) -> str:
+    if not validacao.get("bloqueada"):
+        return ""
+    bloqueios = "".join(f"<li>{b}</li>" for b in validacao.get("bloqueios", []))
+    return f'''<div class="card validacao-card">
+      <div class="card-header"><h3>⛔ Recomendação automática bloqueada</h3><span class="badge warn">VALIDAÇÃO NECESSÁRIA</span></div>
+      <p>Os dados abaixo impedem um GO/NO GO confiável. O simulador e os números exibidos devem ser tratados apenas como cenário exploratório.</p>
+      <ul>{bloqueios}</ul>
+    </div>'''
+
+
 def render(analise: dict, out_path: Path) -> str:
     r = analise["resumo_executivo"]
     fin = analise["financeiro"]
@@ -276,6 +296,7 @@ def render(analise: dict, out_path: Path) -> str:
     lotes = analise["lotes"]
     semaforo = analise["semaforo"]
     confianca = analise["confianca_extracao"]
+    validacao = analise.get("validacao_decisao", {"bloqueada": False, "bloqueios": []})
     prazo_meses = r["prazo_contratual_meses"]
 
     lotes_html = "".join(_card_lote(l, prazo_meses) for l in lotes)
@@ -311,6 +332,8 @@ def render(analise: dict, out_path: Path) -> str:
                               ("operacional", "Operacional (20)"), ("documentacao", "Documentação (10)"),
                               ("riscos", "Riscos (10)")]
     )
+    if validacao.get("bloqueada"):
+        categorias_score_html = '<p class="score-provisorio">Score preliminar indisponível para decisão até a validação dos dados críticos.</p>'
 
     motivos_decisao_html = _lista(r["motivos_decisao"])
     pontos_fortes_html = _lista(r["pontos_fortes"])
@@ -343,9 +366,11 @@ def render(analise: dict, out_path: Path) -> str:
     html = html.replace("__DECISAO__", r["decisao"])
     html = html.replace("__DECISAO_CLASSE__", DECISAO_CLASSE.get(r["decisao"], "warn"))
     html = html.replace("__MOTIVOS_DECISAO__", motivos_decisao_html)
-    cor_score = "ok" if r["score_geral"] >= 70 else "warn" if r["score_geral"] >= 40 else "bad"
-    html = html.replace("__SCORE_GAUGE__", _svg_gauge(r["score_geral"], cor_score))
+    score_geral = r["score_geral"]
+    cor_score = "ok" if score_geral is not None and score_geral >= 70 else "warn" if score_geral is not None and score_geral >= 40 else "bad"
+    html = html.replace("__SCORE_GAUGE__", _svg_gauge(score_geral, cor_score))
     html = html.replace("__CATEGORIAS_SCORE__", categorias_score_html)
+    html = html.replace("__VALIDACAO_HTML__", _validacao_html(validacao))
     html = html.replace("__SEMAFORO_HTML__", semaforo_html)
     html = html.replace("__PRAZO__", str(prazo_meses))
     valor_txt = _brl(r["valor_estimado"]) + ("" if r["valor_estimado_explicito"] else " (estimado — não explícito no edital)")
@@ -460,6 +485,9 @@ _TEMPLATE = r"""<!DOCTYPE html>
   .gauge-ok{stroke:var(--ok)} .gauge-warn{stroke:var(--warn)} .gauge-bad{stroke:var(--bad)}
   .gauge-score{font-size:30px;font-weight:800;fill:var(--text);text-anchor:middle}
   .gauge-label{font-size:11px;fill:var(--text-dim);text-anchor:middle}
+  .gauge-indisponivel{width:140px;height:140px;border:10px solid var(--warn);border-radius:50%;margin:0 auto;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .gauge-indisponivel strong{font-size:38px;line-height:1}.gauge-indisponivel span{font-size:11px;color:var(--text-dim);margin-top:6px}
   .go-badge{display:inline-block;font-size:20px;font-weight:800;padding:8px 22px;border-radius:10px;margin-bottom:10px}
   .go-badge.ok{background:var(--ok-bg);color:var(--ok)}
   .go-badge.warn{background:var(--warn-bg);color:var(--warn)}
@@ -526,6 +554,8 @@ _TEMPLATE = r"""<!DOCTYPE html>
   .market-card{text-align:center;padding:40px 20px;color:var(--text-dim)}
   .market-card .lock{font-size:36px;margin-bottom:10px}
   .confianca-row{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap}
+  .validacao-card{border-color:var(--warn);background:var(--warn-bg);margin-bottom:16px}
+  .validacao-card p{font-size:14px;margin:4px 0}.score-provisorio{color:var(--warn);font-size:14px;margin:0}
   footer{text-align:center;color:var(--text-dim);font-size:12px;padding:30px 0}
 </style>
 </head>
@@ -552,6 +582,7 @@ _TEMPLATE = r"""<!DOCTYPE html>
 
 <section id="resumo">
   <h2>📊 Resumo Executivo</h2>
+  __VALIDACAO_HTML__
   <div class="card resumo-top">
     <div>__SCORE_GAUGE__</div>
     <div>

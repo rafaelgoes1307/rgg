@@ -28,6 +28,25 @@ def _pendencias_lote(lote: dict) -> list:
     ]
 
 
+def _bloqueios_decisao(dados: dict) -> list:
+    """Lista condições que impedem uma recomendação automática.
+
+    Não confunde ausência de informação com risco do negócio: é uma trava de
+    qualidade dos dados antes de precificar ou recomendar participação.
+    """
+    bloqueios = []
+    lotes = dados.get("lotes") or []
+    if not lotes:
+        bloqueios.append("Nenhum lote foi extraído com evidência no edital.")
+    elif any(not lote.get("fonte") for lote in lotes):
+        bloqueios.append("Há lote(s) sem página e trecho de origem confirmados.")
+    if dados.get("orgao") == "Órgão não identificado":
+        bloqueios.append("O órgão licitante não foi confirmado no documento.")
+    if any(lote.get("categoria_veiculo") == "nao_especificado" for lote in lotes):
+        bloqueios.append("Há lote(s) sem categoria de veículo identificada.")
+    return bloqueios
+
+
 def build_analise(arquivo_pdf: str, paginas: list, dados: dict, conn) -> dict:
     prazo_meses = dados["prazo_contratual_meses"]
     valor_estimado_total = dados["valor_estimado"]
@@ -67,7 +86,8 @@ def build_analise(arquivo_pdf: str, paginas: list, dados: dict, conn) -> dict:
     juridico_kb = kb.match_juridico(conn, "\n".join(paginas))
 
     score = scoring.compute_score(dados, lotes_resultado, consolidado, achados_juridicos, prazo_meses)
-    decisao = scoring.decisao_go_no_go(score, consolidado)
+    bloqueios_decisao = _bloqueios_decisao(dados)
+    decisao = scoring.decisao_go_no_go(score, consolidado, bloqueios_decisao)
     prazo_entrega_info = scoring.avaliar_prazo_entrega(paginas)
     semaforo = scoring.compute_semaforo(score, prazo_entrega_info)
     confianca = scoring.confianca_extracao(dados)
@@ -111,7 +131,10 @@ def build_analise(arquivo_pdf: str, paginas: list, dados: dict, conn) -> dict:
     resumo_executivo = {
         "decisao": decisao["decisao"],
         "motivos_decisao": decisao["motivos"],
-        "score_geral": score["total"],
+        # O score preliminar permanece no JSON para auditoria, mas nunca é
+        # exibido como recomendação quando existem bloqueios de dados.
+        "score_geral": None if decisao["bloqueada"] else score["total"],
+        "score_preliminar": score["total"],
         "score_categorias": score["categorias"],
         "orgao": dados["orgao"],
         "numero_processo": dados["numero_processo"],
@@ -121,6 +144,7 @@ def build_analise(arquivo_pdf: str, paginas: list, dados: dict, conn) -> dict:
         "valor_estimado_explicito": valor_explicito,
         "qtd_lotes": dados["qtd_lotes"],
         "qtd_itens": qtd_itens_total,
+        "bloqueios_decisao": bloqueios_decisao,
         **resumo_narrativo,
     }
 
@@ -138,6 +162,11 @@ def build_analise(arquivo_pdf: str, paginas: list, dados: dict, conn) -> dict:
         "checklist_pratico": checklist,
         "timeline": timeline,
         "confianca_extracao": confianca,
+        "validacao_decisao": {
+            "bloqueada": decisao["bloqueada"],
+            "bloqueios": bloqueios_decisao,
+            "score_preliminar": score["total"],
+        },
         "market_intelligence": {
             "disponivel": False,
             "mensagem": "Benchmark de Mercado disponível na Versão 2.",

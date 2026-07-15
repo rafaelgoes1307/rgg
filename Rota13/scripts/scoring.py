@@ -155,7 +155,21 @@ def compute_score(dados: dict, lotes_resultado: list, consolidado: dict,
     return {"total": total, "categorias": categorias}
 
 
-def decisao_go_no_go(score: dict, consolidado: dict) -> dict:
+def decisao_go_no_go(score: dict, consolidado: dict, bloqueios: list = None) -> dict:
+    """Emite recomendação somente quando os dados mínimos foram confirmados.
+
+    Um score calculado sobre lotes ou preços incertos parece preciso, mas pode
+    induzir uma proposta errada. Nesses casos a saída correta é pedir
+    validação humana, não forçar GO/NO GO.
+    """
+    bloqueios = bloqueios or []
+    if bloqueios:
+        return {
+            "decisao": "ANÁLISE PENDENTE",
+            "motivos": bloqueios,
+            "bloqueada": True,
+        }
+
     total = score["total"]
     cat = score["categorias"]
     margem = consolidado.get("margem_media")
@@ -183,7 +197,7 @@ def decisao_go_no_go(score: dict, consolidado: dict) -> dict:
         if not motivos:
             motivos = ["Score consolidado moderado — recomenda-se revisão pontual antes de decidir."]
 
-    return {"decisao": decisao, "motivos": motivos}
+    return {"decisao": decisao, "motivos": motivos, "bloqueada": False}
 
 
 def _cor(fracao: float) -> str:

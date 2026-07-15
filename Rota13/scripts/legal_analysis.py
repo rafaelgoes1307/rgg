@@ -19,16 +19,15 @@ def analisar_riscos_juridicos(paginas: list) -> list:
     offsets = construir_indice_paginas(paginas)
     achados = []
 
-    # 1) Franquia de KM ausente
+    # 1) Franquia / quilometragem
     tem_km = _achar(texto, offsets, r"franquia\s+de\s+(km|quilomet)")
-    tem_menciona_km = _achar(texto, offsets, r"\bkm\b|quilomet")
-    if not tem_km:
+    km_livre = _achar(texto, offsets, r"(?:quilometragem|km)\s+livre|livre\s+de\s+quilometragem")
+    if km_livre:
         achados.append({
-            "analise": "Não foi localizada menção explícita a franquia de quilometragem. "
-                       "Isso pode indicar \"KM livre\" (risco de sobrecusto) ou apenas ausência de "
-                       "detalhamento no texto disponível — recomenda-se confirmar diretamente no edital.",
+            "analise": "Quilometragem livre identificada no edital — o custo de uso não tem teto contratual; "
+                       "precifique desgaste, manutenção e pneus para um cenário de uso intenso.",
             "severidade": "media",
-            "pagina": None, "trecho": None,
+            **fonte_do_match(texto, offsets, km_livre),
         })
     elif tem_km:
         achados.append({
@@ -36,6 +35,14 @@ def analisar_riscos_juridicos(paginas: list) -> list:
                        "e o custo do KM excedente antes de precificar a proposta.",
             "severidade": "baixa",
             **fonte_do_match(texto, offsets, tem_km),
+        })
+    else:
+        achados.append({
+            "analise": "Não foi localizada menção explícita a franquia de quilometragem. "
+                       "Isso pode indicar \"KM livre\" (risco de sobrecusto) ou apenas ausência de "
+                       "detalhamento no texto disponível — recomenda-se confirmar diretamente no edital.",
+            "severidade": "media",
+            "pagina": None, "trecho": None,
         })
 
     # 2) Reajuste / reequilíbrio

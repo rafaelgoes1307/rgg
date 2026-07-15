@@ -27,7 +27,11 @@ NUM_CTX = int(os.environ.get("ROTA13_AI_NUM_CTX", "8192"))
 TIMEOUT_DISPONIBILIDADE = 2
 TIMEOUT_GERACAO = 240
 MAX_ITERACOES_FERRAMENTA = 3
-MAX_CHARS_EDITAL = 14000  # limite de contexto enviado ao modelo
+# Cada chamada preserva um contexto manejável para modelos locais modestos,
+# mas o edital inteiro é percorrido por segmentos relevantes; nunca apenas o
+# começo do arquivo.
+MAX_CHARS_SEGMENTO = 14000
+MAX_SEGMENTOS_IA = 8
 
 CATEGORIAS_VALIDAS = [
     "hatch", "sedan", "suv", "pickup", "van", "onibus", "caminhao",
@@ -133,6 +137,42 @@ def _texto_paginado(paginas: list) -> str:
     return "\n\n".join(partes)
 
 
+def _segmentos_relevantes(paginas: list) -> list:
+    """Agrupa páginas relevantes sem truncar o edital no começo.
+
+    O preâmbulo contém órgão e processo, enquanto tabelas de lotes e valores
+    normalmente ficam no TR/anexos. Selecionamos ambos e conservamos os
+    marcadores de página para a verificação posterior das citações.
+    """
+    padrao_prioritario = re.compile(
+        r"\b(lote|quantitativo|valor\s+(?:estimado|global)|or[çc]amento|"
+        r"termo\s+de\s+refer[êe]ncia)\b", re.IGNORECASE,
+    )
+    padrao_contexto = re.compile(r"\b(objeto|vig[êe]ncia|prazo\s+de\s+execu[çc][ãa]o)\b", re.IGNORECASE)
+    iniciais = list(range(min(5, len(paginas))))
+    prioritarias = [i for i, pagina in enumerate(paginas) if padrao_prioritario.search(pagina) and i not in iniciais]
+    contexto = [i for i, pagina in enumerate(paginas) if padrao_contexto.search(pagina) and i not in iniciais and i not in prioritarias]
+    # A ordem é intencional: não deixe dezenas de ocorrências de cláusulas de
+    # vigência expulsarem as tabelas do TR do limite de chamadas locais.
+    indices = iniciais + prioritarias + contexto
+
+    segmentos, atual = [], []
+    tamanho_atual = 0
+    for i in indices:
+        pagina_marcada = f"[PAGINA {i + 1}]\n{paginas[i]}"
+        if atual and tamanho_atual + len(pagina_marcada) > MAX_CHARS_SEGMENTO:
+            segmentos.append("\n\n".join(atual))
+            atual, tamanho_atual = [], 0
+        atual.append(pagina_marcada)
+        tamanho_atual += len(pagina_marcada) + 2
+    if atual:
+        segmentos.append("\n\n".join(atual))
+
+    # Evita muitas chamadas em um edital excepcionalmente longo. As páginas
+    # iniciais e as últimas continuam representadas nos segmentos selecionados.
+    return segmentos[:MAX_SEGMENTOS_IA]
+
+
 def _campo_com_fonte(bruto, paginas: list, tipo=str):
     """Recebe {"valor":..., "pagina":..., "trecho":...} e devolve (valor_tipado, fonte|None),
     verificando a citação contra o texto real da página antes de aceitá-la."""
@@ -217,6 +257,80 @@ def _normalizar(dados: dict, paginas: list) -> dict:
     }
 
 
+def _extrair_segmento_com_ia(texto_segmento: str, paginas: list):
+    """Executa uma chamada de extração e mantém o protocolo de ferramentas."""
+    mensagens = [
+        {"role": "system", "content": PROMPT_SISTEMA},
+        {"role": "user", "content": f"Trecho do edital (pode ser parcial):\n\n{texto_segmento}"},
+    ]
+    for _ in range(MAX_ITERACOES_FERRAMENTA):
+        resposta = _chamar_ollama(mensagens)
+        msg = resposta.get("message", {})
+        tool_calls = msg.get("tool_calls") or []
+
+        if not tool_calls:
+            dados = _extrair_json(msg.get("content", ""))
+            return _normalizar(dados, paginas) if dados else None
+
+        mensagens.append(msg)
+        for call in tool_calls:
+            nome = call.get("function", {}).get("name")
+            args = call.get("function", {}).get("arguments", {})
+            if nome == "buscar_na_internet":
+                conteudo_ferramenta = json.dumps(search_web(args.get("query", "")), ensure_ascii=False)
+            else:
+                conteudo_ferramenta = "Ferramenta desconhecida."
+            mensagens.append({"role": "tool", "content": conteudo_ferramenta})
+    return None
+
+
+def _unir_extracoes(extracoes: list) -> dict | None:
+    """Consolida extrações parciais, sempre preferindo valores com citação."""
+    if not extracoes:
+        return None
+
+    campos_texto = {"orgao": "Órgão não identificado", "numero_processo": "Não identificado"}
+    resultado = {
+        **campos_texto,
+        "objeto": "Objeto não identificado — revisar edital manualmente.",
+        "prazo_contratual_meses": 12,
+        "valor_estimado": 0.0,
+        "valor_estimado_explicito": False,
+        "lotes": [],
+        "fontes": {"orgao": None, "numero_processo": None, "objeto": None,
+                    "prazo_contratual_meses": None, "valor_estimado": None},
+        "riscos_juridicos_ia": [], "motor": "ia",
+    }
+    lotes_por_numero = {}
+    for dados in extracoes:
+        for campo, padrao in campos_texto.items():
+            if resultado[campo] == padrao and dados.get(campo) != padrao:
+                resultado[campo] = dados[campo]
+                resultado["fontes"][campo] = dados.get("fontes", {}).get(campo)
+        if resultado["objeto"].startswith("Objeto não identificado") and not dados.get("objeto", "").startswith("Objeto não identificado"):
+            resultado["objeto"] = dados["objeto"]
+            resultado["fontes"]["objeto"] = dados.get("fontes", {}).get("objeto")
+        if resultado["prazo_contratual_meses"] == 12 and dados.get("prazo_contratual_meses", 12) != 12:
+            resultado["prazo_contratual_meses"] = dados["prazo_contratual_meses"]
+            resultado["fontes"]["prazo_contratual_meses"] = dados.get("fontes", {}).get("prazo_contratual_meses")
+        if not resultado["valor_estimado_explicito"] and dados.get("valor_estimado_explicito"):
+            resultado["valor_estimado"] = dados["valor_estimado"]
+            resultado["valor_estimado_explicito"] = True
+            resultado["fontes"]["valor_estimado"] = dados.get("fontes", {}).get("valor_estimado")
+
+        for lote in dados.get("lotes", []):
+            numero = lote["numero"]
+            atual = lotes_por_numero.get(numero)
+            if atual is None or (not atual.get("fonte") and lote.get("fonte")):
+                lotes_por_numero[numero] = lote
+        resultado["riscos_juridicos_ia"].extend(dados.get("riscos_juridicos_ia", []))
+
+    resultado["lotes"] = [lotes_por_numero[n] for n in sorted(lotes_por_numero)]
+    resultado["qtd_lotes"] = len(resultado["lotes"])
+    resultado["qtd_itens"] = sum(l["quantidade"] for l in resultado["lotes"])
+    return resultado
+
+
 def extract_with_ai(paginas: list):
     """Tenta extrair os dados estruturados do edital usando o Ollama local.
     Retorna None (silenciosamente) se a IA estiver indisponível ou falhar —
@@ -224,33 +338,11 @@ def extract_with_ai(paginas: list):
     if not ollama_disponivel():
         return None
 
-    texto_paginado = _texto_paginado(paginas)[:MAX_CHARS_EDITAL]
-    mensagens = [
-        {"role": "system", "content": PROMPT_SISTEMA},
-        {"role": "user", "content": f"Texto do edital:\n\n{texto_paginado}"},
-    ]
-
     try:
-        for _ in range(MAX_ITERACOES_FERRAMENTA):
-            resposta = _chamar_ollama(mensagens)
-            msg = resposta.get("message", {})
-            tool_calls = msg.get("tool_calls") or []
-
-            if not tool_calls:
-                conteudo = msg.get("content", "")
-                dados = _extrair_json(conteudo)
-                return _normalizar(dados, paginas) if dados else None
-
-            mensagens.append(msg)
-            for call in tool_calls:
-                nome = call.get("function", {}).get("name")
-                args = call.get("function", {}).get("arguments", {})
-                if nome == "buscar_na_internet":
-                    resultados = search_web(args.get("query", ""))
-                    conteudo_ferramenta = json.dumps(resultados, ensure_ascii=False)
-                else:
-                    conteudo_ferramenta = "Ferramenta desconhecida."
-                mensagens.append({"role": "tool", "content": conteudo_ferramenta})
-        return None
+        extracoes = [
+            dados for segmento in _segmentos_relevantes(paginas)
+            if (dados := _extrair_segmento_com_ia(segmento, paginas)) is not None
+        ]
+        return _unir_extracoes(extracoes)
     except Exception:
         return None

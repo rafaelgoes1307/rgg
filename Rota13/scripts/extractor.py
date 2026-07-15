@@ -10,6 +10,7 @@ do PDF onde foi localizada), para rastreabilidade — ver scripts/citations.py.
 Este é o motor "defensável": determinístico, sem alucinação, 100% auditável.
 """
 import re
+import unicodedata
 
 from .citations import construir_indice_paginas, fonte_do_match, pagina_do_offset, trecho as _trecho
 
@@ -35,6 +36,10 @@ def extract_orgao(texto: str, offsets: list):
     # [^\S\n] = espaço/tab mas nunca quebra de linha, para não engolir o
     # cabeçalho inteiro do edital quando várias linhas seguidas estão em maiúsculas.
     padroes = [
+        # Órgãos estaduais costumam aparecer no cabeçalho com essa forma. Os
+        # padrões específicos vêm antes dos genéricos para não capturar uma
+        # referência administrativa perdida nas páginas seguintes.
+        r"SECRETARIA\s+DA\s+ADMINISTRA[CÇ][ÃA]O(?:\s+DO\s+ESTADO\s+DA\s+BAHIA)?",
         r"PREFEITURA MUNICIPAL DE [A-ZÀ-Ú][A-ZÀ-Ú \-]+",
         r"MUNIC[IÍ]PIO DE [A-ZÀ-Ú][A-ZÀ-Ú \-]+",
         r"GOVERNO DO ESTADO D[AEO][S]? [A-ZÀ-Ú][A-ZÀ-Ú \-]{1,50}",
@@ -50,7 +55,12 @@ def extract_orgao(texto: str, offsets: list):
     # documento) entre TODOS os padrões, em vez de "primeiro padrão da lista
     # que casar em qualquer lugar" — evita pegar um trecho garbled lá pela
     # página 40 quando o cabeçalho real e limpo está na página 1-2.
-    candidatos = [m for p in padroes for m in [re.search(p, texto_upper)] if m]
+    # Prefira identificadores institucionais específicos mesmo quando uma
+    # frase genérica aparece algumas linhas antes (ex.: "Secretaria indicado
+    # no item..."). Só depois use a heurística de ocorrência mais à esquerda.
+    candidatos_prioritarios = [re.search(p, texto_upper) for p in padroes[:1]]
+    candidatos_prioritarios = [m for m in candidatos_prioritarios if m]
+    candidatos = candidatos_prioritarios or [m for p in padroes[1:] for m in [re.search(p, texto_upper)] if m]
     if candidatos:
         m = min(candidatos, key=lambda m: m.start())
         valor = texto[m.start():m.end()].title().strip()
@@ -109,8 +119,6 @@ def extract_objeto(texto: str, offsets: list):
     objeto = re.sub(r"\s+", " ", m_local.group(1)).strip(" .:-")
     fonte = {"pagina": pagina_do_offset(offsets, inicio), "trecho": _trecho(texto, inicio, fim)}
     return objeto[:700], fonte
-    objeto = re.sub(r"\s+", " ", m.group(1)).strip(" .:-")
-    return objeto[:700], fonte_do_match(texto, offsets, m)
 
 
 def extract_prazo_contratual_meses(texto: str, offsets: list):
@@ -182,8 +190,33 @@ def _maior_quantidade(bloco: str) -> int:
 
 
 def extract_lotes(texto: str, offsets: list) -> list:
-    """Divide o texto em blocos de LOTE e extrai dados básicos de cada um, com fonte."""
-    marcadores = list(re.finditer(r"\bLOTE\s*(?:N[º°oO.]?\s*)?(\d{1,3})\b", texto, re.IGNORECASE))
+    """Extrai lotes da tabela de itens, evitando referências em cláusulas.
+
+    A palavra ``lote`` também aparece em regras de habilitação, reserva de
+    frota e textos-modelo. Um marcador só é considerado lote licitável quando
+    estiver no cabeçalho de uma tabela que contenha participação, quantitativo
+    e unidade de fornecimento. Se o documento não tiver essa estrutura, o
+    fallback antigo é preservado, mas o resultado fica explicitamente marcado
+    como revisão manual pela ausência de fonte estruturada.
+    """
+    todos = list(re.finditer(r"\bLOTE\s*(?:N[º°oO.]?\s*)?(\d{1,3})\b", texto, re.IGNORECASE))
+
+    def eh_cabecalho_tabela(match) -> bool:
+        janela = texto[match.start():match.start() + 700].lower()
+        janela = unicodedata.normalize("NFD", janela).encode("ascii", "ignore").decode("ascii")
+        janela = re.sub(r"\s+", " ", janela)
+        formato_bahia = all(termo in janela for termo in ("participacao", "quantitativo")) and (
+            "unidade de fornecimento" in janela or "(uf)" in janela
+        )
+        # Alguns editais usam cabeçalho compacto (UND/QTD/DESCRIÇÃO), sem a
+        # coluna de participação. Ainda exigimos os três campos de tabela.
+        formato_compacto = all(termo in janela for termo in ("qtd", "descri")) and (
+            "und de medida" in janela or "unidade" in janela
+        )
+        return formato_bahia or formato_compacto
+
+    estruturados = [m for m in todos if eh_cabecalho_tabela(m)]
+    marcadores = estruturados or todos
     lotes = []
 
     if not marcadores:
@@ -202,15 +235,32 @@ def extract_lotes(texto: str, offsets: list) -> list:
         inicio = m.end()
         fim = marcadores[i + 1].start() if i + 1 < len(marcadores) else min(len(texto), inicio + 3000)
         bloco = texto[inicio:fim]
-        descricao_m = re.search(r"([^\n]{10,250})", bloco)
-        descricao = descricao_m.group(1).strip() if descricao_m else f"Lote {numero}"
-        qtd = _maior_quantidade(bloco)
+        # Em PDFs, a tabela frequentemente vira uma única linha. A unidade
+        # (UN/UND) seguida da quantidade é o sinal mais confiável nesse caso.
+        qtd_tabela = re.search(r"\b(?:UN|UND|UNIDADE)\s+(\d{1,4})\b", bloco, re.IGNORECASE)
+        if not qtd_tabela:
+            # Layout compacto: a quantidade vem após a unidade, no fim da
+            # linha que descreve o item (ex.: "Diária 4.880").
+            qtd_tabela = re.search(r"\b(?:DI[ÁA]RIA|M[ÊE]S|SERVI[ÇC]O)\s+(\d{1,6})\b", bloco, re.IGNORECASE)
+        qtd = int(qtd_tabela.group(1)) if qtd_tabela else _maior_quantidade(bloco)
+
+        desc_fim = qtd_tabela.start() if qtd_tabela else min(len(bloco), 400)
+        descricao_bruta = bloco[:desc_fim]
+        # Remove os cabeçalhos repetidos, preservando a especificação do item.
+        descricao_bruta = re.sub(
+            r"^\s*(participa[çc][ãa]o.*?(?:\(uf\)|unidade de fornecimento).*?(?:descri[çc][ãa]o)?)",
+            "", descricao_bruta, flags=re.IGNORECASE | re.DOTALL,
+        )
+        descricao = re.sub(r"\s+", " ", descricao_bruta).strip(" .:-")
+        if len(descricao) < 10:
+            descricao = f"Lote {numero} — especificação a conferir no TR"
         lotes.append({
             "numero": numero,
             "descricao": re.sub(r"\s+", " ", descricao)[:250],
             "quantidade": qtd,
             "categoria_veiculo": detectar_categoria(bloco),
             "fonte": fonte_do_match(texto, offsets, m),
+            "estruturado": bool(estruturados),
         })
 
     vistos = set()
