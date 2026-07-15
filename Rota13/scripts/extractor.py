@@ -14,7 +14,11 @@ import unicodedata
 
 from .citations import construir_indice_paginas, fonte_do_match, pagina_do_offset, trecho as _trecho
 
-CATEGORIAS_VEICULO = {
+# Carroceria (o que é o carro) e motorização (o que faz o carro andar) são
+# dimensões INDEPENDENTES — um "SUV PHEV" não é a mesma coisa que um "Sedan
+# PHEV". As duas são detectadas separadamente (detectar_carroceria e
+# detectar_motorizacao) e nunca combinadas num único campo de busca.
+CARROCERIAS = {
     "hatch": ["hatch", "popular", "compacto"],
     "sedan": ["sedan", "sedã"],
     "suv": ["suv", "utilitário esportivo"],
@@ -23,13 +27,22 @@ CATEGORIAS_VEICULO = {
     "onibus": ["ônibus", "micro-ônibus", "microônibus"],
     "caminhao": ["caminhão", "caminhao", "basculante", "baú"],
     "ambulancia": ["ambulância", "ambulancia"],
+}
+
+MOTORIZACOES = {
     # PHEV (plug-in, recarrega na tomada) e HEV (híbrido convencional, não
     # recarrega na tomada) são motorizações diferentes — custo, autonomia
-    # elétrica e disponibilidade de mercado não são as mesmas. Nunca tratar
-    # como a mesma categoria.
+    # elétrica e disponibilidade de mercado não são as mesmas.
     "hibrido_phev": ["phev", "plug-in", "plugin", "hibrido plug-in", "híbrido plug-in"],
     "hibrido_hev": ["hev", "híbrido", "hibrido", "hybrid"],
+    "eletrico": ["100% elétrico", "100% eletrico", "elétrico puro", "bev", "carro elétrico"],
 }
+
+# Mantido por compatibilidade com código que ainda itera CATEGORIAS_VEICULO
+# (ex.: base de veículos usa "categoria" = motorização, com carrocerias
+# convencionais também vivendo nesse mesmo campo quando não há motorização
+# especial — ver scripts/vehicles.py).
+CATEGORIAS_VEICULO = {**CARROCERIAS, **MOTORIZACOES}
 
 
 def _primeiras_linhas(texto, n=60):
@@ -179,21 +192,43 @@ def extract_valor_estimado(texto: str, offsets: list):
     return 0.0, None, False
 
 
-def detectar_categoria(descricao: str) -> str:
+def detectar_carroceria(descricao: str) -> str:
+    """Detecta SÓ o tipo de carroceria (hatch/sedan/suv/...), nunca a
+    motorização — um SUV continua sendo um SUV independente de ser híbrido,
+    elétrico ou a combustão."""
     desc = descricao.lower()
-    # Motorização (híbrido) é verificada antes de carroceria: "SUV PHEV"
-    # precisa cair em "hibrido_phev" (restringe a base a veículos com a
-    # motorização certa), não em "suv" genérico (pegaria qualquer SUV comum,
-    # mais barato e fora de especificação). PHEV é checado antes de HEV
-    # porque "híbrido plug-in" também contém a palavra "híbrido".
-    if any(p in desc for p in CATEGORIAS_VEICULO["hibrido_phev"]):
-        return "hibrido_phev"
-    if any(p in desc for p in CATEGORIAS_VEICULO["hibrido_hev"]):
-        return "hibrido_hev"
-    for categoria, palavras in CATEGORIAS_VEICULO.items():
-        if categoria not in ("hibrido_phev", "hibrido_hev") and any(p in desc for p in palavras):
-            return categoria
+    for carroceria, palavras in CARROCERIAS.items():
+        if any(p in desc for p in palavras):
+            return carroceria
     return "nao_especificado"
+
+
+def detectar_motorizacao(descricao: str):
+    """Detecta a motorização (PHEV/HEV/elétrico), ou None se for combustão
+    comum (não mencionada) — usado para compor o campo `categoria_veiculo`
+    quando há motorização especial."""
+    desc = descricao.lower()
+    # PHEV é checado antes de HEV porque "híbrido plug-in" também contém a
+    # palavra "híbrido".
+    if any(p in desc for p in MOTORIZACOES["hibrido_phev"]):
+        return "hibrido_phev"
+    if any(p in desc for p in MOTORIZACOES["eletrico"]):
+        return "eletrico"
+    if any(p in desc for p in MOTORIZACOES["hibrido_hev"]):
+        return "hibrido_hev"
+    return None
+
+
+def detectar_categoria(descricao: str) -> str:
+    """Campo único de motorização+carroceria usado pela base de veículos
+    (scripts/vehicles.py: campo `categoria`). Motorização especial (híbrido/
+    elétrico) tem prioridade — ela é o que mais muda custo/FIPE; quando não
+    há motorização especial, cai na carroceria (que também funciona como
+    "categoria" para veículos a combustão comuns)."""
+    motorizacao = detectar_motorizacao(descricao)
+    if motorizacao:
+        return motorizacao
+    return detectar_carroceria(descricao)
 
 
 def _maior_quantidade(bloco: str) -> int:
@@ -240,6 +275,7 @@ def extract_lotes(texto: str, offsets: list) -> list:
             "descricao": "Lote único (não segmentado no edital)",
             "quantidade": qtd,
             "categoria_veiculo": detectar_categoria(texto),
+            "carroceria": detectar_carroceria(texto),
             "fonte": None,
         })
         return lotes
@@ -273,6 +309,7 @@ def extract_lotes(texto: str, offsets: list) -> list:
             "descricao": re.sub(r"\s+", " ", descricao)[:250],
             "quantidade": qtd,
             "categoria_veiculo": detectar_categoria(bloco),
+            "carroceria": detectar_carroceria(bloco),
             "fonte": fonte_do_match(texto, offsets, m),
             "estruturado": bool(estruturados),
         })

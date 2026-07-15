@@ -15,7 +15,8 @@
     "pneu": "175/70 R14",
     "fipe": 72000,
     "observacoes": "Veículo popular mais usado em frotas administrativas.",
-    "garantia": "3 anos ou 100.000 km (garantia de fábrica)"
+    "garantia": "3 anos ou 100.000 km (garantia de fábrica)",
+    "carroceria": "hatch"
   },
   {
     "marca": "Volkswagen",
@@ -33,7 +34,8 @@
     "pneu": "175/70 R14",
     "fipe": 75000,
     "observacoes": "Alternativa comum em pregões de locação simples.",
-    "garantia": "3 anos ou 100.000 km (garantia de fábrica)"
+    "garantia": "3 anos ou 100.000 km (garantia de fábrica)",
+    "carroceria": "hatch"
   },
   {
     "marca": "Chevrolet",
@@ -51,7 +53,8 @@
     "pneu": "195/55 R16",
     "fipe": 92000,
     "observacoes": "Sedã compacto usado para representação/gestão.",
-    "garantia": "3 anos ou 100.000 km (garantia de fábrica)"
+    "garantia": "3 anos ou 100.000 km (garantia de fábrica)",
+    "carroceria": "sedan"
   },
   {
     "marca": "Toyota",
@@ -69,7 +72,8 @@
     "pneu": "205/55 R16",
     "fipe": 148000,
     "observacoes": "Sedã executivo, comum em contratos de autoridades.",
-    "garantia": "3 anos, km ilimitado (garantia de fábrica; ampliável)"
+    "garantia": "3 anos, km ilimitado (garantia de fábrica; ampliável)",
+    "carroceria": "sedan"
   },
   {
     "marca": "Fiat",
@@ -87,7 +91,8 @@
     "pneu": "175/70 R14",
     "fipe": 89000,
     "observacoes": "Picape leve, muito usada por secretarias de obras/agricultura.",
-    "garantia": "3 anos, km ilimitado (garantia de fábrica)"
+    "garantia": "3 anos, km ilimitado (garantia de fábrica)",
+    "carroceria": "pickup"
   },
   {
     "marca": "Fiat",
@@ -105,7 +110,8 @@
     "pneu": "225/65 R17",
     "fipe": 145000,
     "observacoes": "Picape média cabine dupla, fiscalização e vigilância.",
-    "garantia": "3 anos, km ilimitado (garantia de fábrica)"
+    "garantia": "3 anos, km ilimitado (garantia de fábrica)",
+    "carroceria": "pickup"
   },
   {
     "marca": "Chevrolet",
@@ -123,7 +129,8 @@
     "pneu": "245/70 R16",
     "fipe": 235000,
     "observacoes": "Picape pesada 4x4, comum em zona rural e defesa civil.",
-    "garantia": "3 anos ou 100.000 km (garantia de fábrica)"
+    "garantia": "3 anos ou 100.000 km (garantia de fábrica)",
+    "carroceria": "pickup"
   },
   {
     "marca": "Toyota",
@@ -141,7 +148,8 @@
     "pneu": "265/60 R18",
     "fipe": 285000,
     "observacoes": "Picape robusta, alto valor de FIPE, exige análise cuidadosa de ROI.",
-    "garantia": "3 anos, km ilimitado (garantia de fábrica; ampliável)"
+    "garantia": "3 anos, km ilimitado (garantia de fábrica; ampliável)",
+    "carroceria": "pickup"
   },
   {
     "marca": "Jeep",
@@ -159,7 +167,8 @@
     "pneu": "215/60 R17",
     "fipe": 128000,
     "observacoes": "SUV compacto usado em fiscalização e vigilância sanitária.",
-    "garantia": "3 anos, km ilimitado (garantia de fábrica)"
+    "garantia": "3 anos, km ilimitado (garantia de fábrica)",
+    "carroceria": "suv"
   },
   {
     "marca": "Renault",
@@ -177,7 +186,8 @@
     "pneu": "215/65 R16",
     "fipe": 105000,
     "observacoes": "SUV com boa relação custo-benefício para zona rural.",
-    "garantia": "3 anos ou 100.000 km (garantia de fábrica)"
+    "garantia": "3 anos ou 100.000 km (garantia de fábrica)",
+    "carroceria": "suv"
   },
   {
     "marca": "Fiat",
@@ -195,7 +205,8 @@
     "pneu": "175/70 R13",
     "fipe": 82000,
     "observacoes": "Furgão leve para transporte de materiais e saúde (insumos).",
-    "garantia": "3 anos, km ilimitado (garantia de fábrica)"
+    "garantia": "3 anos, km ilimitado (garantia de fábrica)",
+    "carroceria": "van"
   },
   {
     "marca": "Renault",
@@ -213,7 +224,8 @@
     "pneu": "215/75 R16",
     "fipe": 210000,
     "observacoes": "Van de carga média, usada em logística de secretarias.",
-    "garantia": "3 anos ou 100.000 km (garantia de fábrica)"
+    "garantia": "3 anos ou 100.000 km (garantia de fábrica)",
+    "carroceria": "van"
   },
   {
     "marca": "Fiat",
@@ -231,7 +243,8 @@
     "pneu": "225/70 R15C",
     "fipe": 260000,
     "observacoes": "Minibus/van de passageiros, transporte escolar e de saúde.",
-    "garantia": "3 anos, km ilimitado (garantia de fábrica)"
+    "garantia": "3 anos, km ilimitado (garantia de fábrica)",
+    "carroceria": "van"
   },
   {
     "marca": "Mercedes-Benz",
@@ -249,7 +262,8 @@
     "pneu": "225/75 R16C",
     "fipe": 320000,
     "observacoes": "Base comum para ambulâncias e vans de transporte de pacientes.",
-    "garantia": "2 anos, km ilimitado (garantia de fábrica; ampliável)"
+    "garantia": "2 anos, km ilimitado (garantia de fábrica; ampliável)",
+    "carroceria": "van"
   },
   {
     "marca": "Mercedes-Benz",
@@ -267,7 +281,8 @@
     "pneu": "225/75 R16C",
     "fipe": 420000,
     "observacoes": "Ambulância tipo D/UTI, exige certificação Inmetro/ANVISA e manutenção especializada.",
-    "garantia": "2 anos, km ilimitado (garantia de fábrica; ampliável)"
+    "garantia": "2 anos, km ilimitado (garantia de fábrica; ampliável)",
+    "carroceria": "ambulancia"
   },
   {
     "marca": "Volkswagen",
@@ -285,7 +300,8 @@
     "pneu": "215/75 R17.5",
     "fipe": 380000,
     "observacoes": "Transporte escolar/coletivo, exige CNH categoria D do condutor.",
-    "garantia": "3 anos ou 100.000 km (garantia de fábrica)"
+    "garantia": "3 anos ou 100.000 km (garantia de fábrica)",
+    "carroceria": "onibus"
   },
   {
     "marca": "Volkswagen",
@@ -303,7 +319,8 @@
     "pneu": "185/65 R14",
     "fipe": 88000,
     "observacoes": "Picape leve alternativa à Strada em pregões de manutenção urbana.",
-    "garantia": "3 anos ou 100.000 km (garantia de fábrica)"
+    "garantia": "3 anos ou 100.000 km (garantia de fábrica)",
+    "carroceria": "pickup"
   },
   {
     "marca": "Toyota",
@@ -321,7 +338,8 @@
     "pneu": "205/55 R16",
     "fipe": 175000,
     "garantia": "3 anos, km ilimitado (bateria híbrida: 8 anos ou 160.000 km)",
-    "observacoes": "Veículo de representação híbrido, comum em contratos para autoridades/secretários."
+    "observacoes": "Veículo de representação híbrido, comum em contratos para autoridades/secretários.",
+    "carroceria": "sedan"
   },
   {
     "marca": "Jeep",
@@ -339,7 +357,8 @@
     "pneu": "225/55 R19",
     "fipe": 285000,
     "garantia": "3 anos, km ilimitado (bateria híbrida: 8 anos ou 160.000 km)",
-    "observacoes": "SUV híbrido plug-in de representação, compatível com exigências de potência/torque combinados de editais para autoridades."
+    "observacoes": "SUV híbrido plug-in de representação, compatível com exigências de potência/torque combinados de editais para autoridades.",
+    "carroceria": "suv"
   },
   {
     "marca": "BYD",
@@ -357,7 +376,8 @@
     "pneu": "215/60 R18",
     "fipe": 189990,
     "garantia": "6 anos ou 150.000 km (veículo) / 8 anos ou 150.000 km (bateria)",
-    "observacoes": "SUV híbrido plug-in — bate exatamente com especificação de 223cv/40,8kgf.m combinados comum em editais de representação funcional. Preço sugerido 2026: R$189.990 (Webmotors/BYD)."
+    "observacoes": "SUV híbrido plug-in — bate exatamente com especificação de 223cv/40,8kgf.m combinados comum em editais de representação funcional. Preço sugerido 2026: R$189.990 (Webmotors/BYD).",
+    "carroceria": "suv"
   },
   {
     "marca": "BYD",
@@ -375,7 +395,8 @@
     "pneu": "205/55 R17",
     "fipe": 155000,
     "garantia": "6 anos ou 150.000 km (veículo) / 8 anos ou 150.000 km (bateria)",
-    "observacoes": "Sedan híbrido plug-in — melhor custo-benefício do mercado brasileiro para lotes que aceitam Sedan HEV/PHEV; bem mais barato que SUVs PHEV do mesmo segmento."
+    "observacoes": "Sedan híbrido plug-in — melhor custo-benefício do mercado brasileiro para lotes que aceitam Sedan HEV/PHEV; bem mais barato que SUVs PHEV do mesmo segmento.",
+    "carroceria": "sedan"
   },
   {
     "marca": "Hyundai",
@@ -393,7 +414,8 @@
     "pneu": "185/65 R15",
     "fipe": 94990,
     "garantia": "3 anos, km ilimitado (garantia de fábrica)",
-    "observacoes": "Hatch popular turbo, alternativa ao Onix/Gol em frotas administrativas. Preço 2026: R$84.990-109.990 conforme versão."
+    "observacoes": "Hatch popular turbo, alternativa ao Onix/Gol em frotas administrativas. Preço 2026: R$84.990-109.990 conforme versão.",
+    "carroceria": "hatch"
   },
   {
     "marca": "Hyundai",
@@ -411,7 +433,8 @@
     "pneu": "215/60 R17",
     "fipe": 149620,
     "garantia": "5 anos, km ilimitado (garantia de fábrica)",
-    "observacoes": "SUV compacto, forte concorrente do Duster/Renegade em editais de fiscalização. Preço 2026: R$149.620 (Comfort) a R$198.120 (Ultimate)."
+    "observacoes": "SUV compacto, forte concorrente do Duster/Renegade em editais de fiscalização. Preço 2026: R$149.620 (Comfort) a R$198.120 (Ultimate).",
+    "carroceria": "suv"
   },
   {
     "marca": "Mitsubishi",
@@ -429,7 +452,8 @@
     "pneu": "265/60 R18",
     "fipe": 255000,
     "garantia": "5 anos, km ilimitado (garantia de fábrica)",
-    "observacoes": "Picape média 4x4 (sucessora da L200 Triton, nome simplificado em 2026) — preço aproximado, conferir tabela atual do fabricante antes de usar em proposta."
+    "observacoes": "Picape média 4x4 (sucessora da L200 Triton, nome simplificado em 2026) — preço aproximado, conferir tabela atual do fabricante antes de usar em proposta.",
+    "carroceria": "pickup"
   },
   {
     "marca": "Volkswagen",
@@ -447,7 +471,8 @@
     "pneu": "185/60 R15",
     "fipe": 94990,
     "garantia": "3 anos, km ilimitado (garantia de fábrica)",
-    "observacoes": "Preço aproximado (versão base) — conferir tabela atual da concessionária antes de propor."
+    "observacoes": "Preço aproximado (versão base) — conferir tabela atual da concessionária antes de propor.",
+    "carroceria": "hatch"
   },
   {
     "marca": "Volkswagen",
@@ -465,7 +490,8 @@
     "pneu": "195/55 R16",
     "fipe": 108990,
     "garantia": "3 anos, km ilimitado (garantia de fábrica)",
-    "observacoes": "Preço 2026 real (versão Sense) — Webmotors. Faixa até R$165.990 (Exclusive)."
+    "observacoes": "Preço 2026 real (versão Sense) — Webmotors. Faixa até R$165.990 (Exclusive).",
+    "carroceria": "sedan"
   },
   {
     "marca": "Volkswagen",
@@ -483,7 +509,8 @@
     "pneu": "205/60 R16",
     "fipe": 122990,
     "garantia": "3 anos, km ilimitado (garantia de fábrica)",
-    "observacoes": "Preço aproximado — conferir tabela atual da concessionária antes de propor."
+    "observacoes": "Preço aproximado — conferir tabela atual da concessionária antes de propor.",
+    "carroceria": "suv"
   },
   {
     "marca": "Volkswagen",
@@ -501,7 +528,8 @@
     "pneu": "205/55 R17",
     "fipe": 116990,
     "garantia": "3 anos, km ilimitado (garantia de fábrica)",
-    "observacoes": "Preço aproximado — conferir tabela atual da concessionária antes de propor."
+    "observacoes": "Preço aproximado — conferir tabela atual da concessionária antes de propor.",
+    "carroceria": "suv"
   },
   {
     "marca": "Chevrolet",
@@ -519,7 +547,8 @@
     "pneu": "205/60 R17",
     "fipe": 124990,
     "garantia": "3 anos, km ilimitado (garantia de fábrica)",
-    "observacoes": "Preço aproximado — conferir tabela atual da concessionária antes de propor. Reestilizado em 2026."
+    "observacoes": "Preço aproximado — conferir tabela atual da concessionária antes de propor. Reestilizado em 2026.",
+    "carroceria": "suv"
   },
   {
     "marca": "BYD",
@@ -537,7 +566,8 @@
     "pneu": "185/65 R15",
     "fipe": 119990,
     "garantia": "6 anos ou 150.000 km (veículo) / 8 anos (bateria)",
-    "observacoes": "100% elétrico hatch compacto, baixíssimo custo de manutenção. Preço 2026 real (Webmotors)."
+    "observacoes": "100% elétrico hatch compacto, baixíssimo custo de manutenção. Preço 2026 real (Webmotors).",
+    "carroceria": "hatch"
   },
   {
     "marca": "Nissan",
@@ -555,6 +585,7 @@
     "pneu": "205/65 R17",
     "fipe": 166990,
     "garantia": "3 anos, km ilimitado (garantia de fábrica)",
-    "observacoes": "Preço 2026 real, versão Sense (Nissan Brasil). Faixa até R$199.990 (Platinum)."
+    "observacoes": "Preço 2026 real, versão Sense (Nissan Brasil). Faixa até R$199.990 (Platinum).",
+    "carroceria": "suv"
   }
 ]

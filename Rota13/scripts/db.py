@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS veiculos (
     marca TEXT,
     modelo TEXT,
     categoria TEXT,
+    carroceria TEXT,
     ano INTEGER,
     motor TEXT,
     combustivel TEXT,

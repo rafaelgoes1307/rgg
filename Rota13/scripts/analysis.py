@@ -55,7 +55,7 @@ def build_analise(arquivo_pdf: str, paginas: list, dados: dict, conn) -> dict:
 
     lotes_resultado = []
     for lote in dados["lotes"]:
-        veiculo_ref = veh.veiculo_referencia(conn, lote["categoria_veiculo"])
+        veiculo_ref = veh.veiculo_referencia(conn, lote["categoria_veiculo"], lote.get("carroceria"))
         proporcao = lote["quantidade"] / qtd_itens_total
         valor_lote_estimado = valor_estimado_total * proporcao
 
@@ -70,7 +70,7 @@ def build_analise(arquivo_pdf: str, paginas: list, dados: dict, conn) -> dict:
         lote_resultado = {
             **lote,
             "veiculo_referencia": veiculo_ref,
-            "alternativas_veiculo": veh.alternativas_veiculo(conn, lote["categoria_veiculo"]),
+            "alternativas_veiculo": veh.alternativas_veiculo(conn, lote["categoria_veiculo"], lote.get("carroceria")),
             "financeiro": fin,
             "cenarios_receita": cenarios_receita,
             "alertas": _alertas_lote(lote, fin, prazo_meses),

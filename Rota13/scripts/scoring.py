@@ -356,7 +356,7 @@ def checklist_pratico(conn, lotes_resultado: list, achados_juridicos: list, conf
     ]
 
     for lote in lotes_resultado:
-        marcas = vehicles.marcas_por_categoria(conn, lote["categoria_veiculo"], limite=2)
+        marcas = vehicles.marcas_por_categoria(conn, lote["categoria_veiculo"], lote.get("carroceria"), limite=2)
         if marcas:
             itens.append(f"Solicitar cotação para o Lote {lote['numero']} ({lote['categoria_veiculo']}): {', '.join(marcas)}")
 
