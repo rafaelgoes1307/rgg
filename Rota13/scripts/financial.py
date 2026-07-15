@@ -24,18 +24,28 @@ retornado como None junto com um aviso em `avisos` — o Dashboard deve exibir
 """
 
 PARAMS_PADRAO = {
-    "desconto_montadora": 0.10,        # 10% de desconto sobre a FIPE na compra
-    "entrada_pct": 0.20,               # 20% de entrada (capital próprio)
-    "taxa_juros_am": 0.015,            # 1,5% a.m. no financiamento do restante
-    "prazo_financiamento_meses": 48,
+    "desconto_montadora": 0.15,        # mínimo de 15% de desconto sobre a FIPE na compra (piso de negociação)
+    "entrada_pct": 0.0,                # premissa: 100% financiado pelo banco, sem entrada própria
+    "taxa_juros_am": 0.015,            # 1,5% a.m. no financiamento
+    "prazo_financiamento_meses": None,  # None = acompanha o prazo do contrato (ver compute_lote_financials)
     "seguro_pct_am": 0.0035,           # 0,35% a.m. do valor do veículo
     "manutencao_mensal": None,         # None = usa tabela por categoria
     "pneus_mensal": None,              # None = usa tabela por categoria
-    "tributos_pct": 0.08,              # ISS + PIS/COFINS simplificado sobre receita bruta
+    "tributos_pct": 0.12,              # tributação simplificada sobre receita bruta (12% flat)
     "administracao_pct": 0.05,         # overhead administrativo sobre receita bruta
     "custos_operacionais_mensal": 80.0,  # rastreamento/GPS, documentação, etc. (por veículo)
     "valor_residual_pct": None,        # None = calcula pela curva de depreciação padrão (ver valor_residual_padrao)
+    "receita_pct_fipe_am": 0.06,       # usado só quando o edital NÃO tem valor estimado explícito — sobre 100% da FIPE
+    "meses_capital_giro": 2,           # reserva de caixa sugerida, em meses de custo operacional
 }
+
+# Quando o edital não informa receita/locação, mostramos 3 cenários lado a lado
+# em vez de um único chute silencioso — o usuário decide qual é razoável.
+CENARIOS_RECEITA_FIPE_PCT = [
+    {"pct": 0.05, "label": "Conservador"},
+    {"pct": 0.06, "label": "Moderado"},
+    {"pct": 0.07, "label": "Otimista"},
+]
 
 TAXA_DEPRECIACAO_ANUAL_PADRAO = 0.15  # ~15% a.a., médio para veículos populares/comerciais leves no Brasil
 
@@ -130,24 +140,35 @@ def compute_lote_financials(lote: dict, veiculo_ref: dict, prazo_meses: int,
     manutencao_mensal_unit = p["manutencao_mensal"] or MANUTENCAO_POR_CATEGORIA.get(categoria, 400.0)
     pneus_mensal_unit = p["pneus_mensal"] or PNEUS_POR_CATEGORIA.get(categoria, 80.0)
 
-    avisos = []
+    avisos = [
+        f"Veículo de referência: {(veiculo_ref or {}).get('marca','—')} {(veiculo_ref or {}).get('modelo','')} "
+        f"(o mais barato da categoria) — confirme que atende 100% das exigências técnicas do edital "
+        f"antes de usar este número; se houver qualquer diferença de especificação, o custo real muda."
+    ]
     if not valor_explicito:
         avisos.append(
             "Receita estimada com base em referência de mercado (não foi encontrado um "
             "valor estimado explícito no edital para este lote) — confira manualmente."
         )
 
+    prazo_financiamento_meses = p["prazo_financiamento_meses"] or prazo_meses
+
     # --- Aquisição / capital ---
+    # Desconto da montadora incide sobre o custo de compra (capital, depreciação,
+    # financiamento) — mas a receita heurística abaixo usa 100% da FIPE, sem desconto,
+    # porque é uma referência de preço de mercado da locação, não de custo de aquisição.
     preco_compra = fipe * (1 - p["desconto_montadora"])
-    capital_por_veiculo = preco_compra * p["entrada_pct"]
-    capital_necessario = capital_por_veiculo * quantidade
 
     # --- Receita ---
     if valor_lote_estimado and valor_lote_estimado > 0 and prazo_meses > 0:
         receita_mensal_unit = valor_lote_estimado / (quantidade * prazo_meses)
     else:
-        receita_mensal_unit = preco_compra * 0.035  # heurística de mercado (2,5% a 4% a.m.)
-        avisos.append("Nenhum valor estimado disponível — receita projetada por heurística de mercado (3,5% a.m. do valor do veículo).")
+        receita_mensal_unit = fipe * p["receita_pct_fipe_am"]
+        avisos.append(
+            f"Nenhum valor estimado disponível no edital — receita projetada em "
+            f"{p['receita_pct_fipe_am']*100:.0f}% a.m. de 100% da FIPE do veículo 0km. "
+            f"Veja os 3 cenários (5%/6%/7%) e ajuste no Simulador."
+        )
     receita_bruta_total = receita_mensal_unit * quantidade * prazo_meses
 
     # --- DRE (por mês, por veículo, depois multiplicado) ---
@@ -156,7 +177,7 @@ def compute_lote_financials(lote: dict, veiculo_ref: dict, prazo_meses: int,
     administracao_mensal_unit = receita_mensal_unit * p["administracao_pct"]
 
     valor_financiado = preco_compra * (1 - p["entrada_pct"])
-    amort = amortizacao_price(p["taxa_juros_am"], p["prazo_financiamento_meses"], valor_financiado, prazo_meses)
+    amort = amortizacao_price(p["taxa_juros_am"], prazo_financiamento_meses, valor_financiado, prazo_meses)
     parcela_mensal_unit = amort["parcela_mensal"]  # desembolso de caixa cheio (principal + juros)
     juros_total_unit = amort["juros_total"]        # só os juros contam como despesa na DRE
     saldo_devedor_final_unit = amort["saldo_devedor_final"]
@@ -165,7 +186,7 @@ def compute_lote_financials(lote: dict, veiculo_ref: dict, prazo_meses: int,
         avisos.append(
             f"O financiamento não estará quitado ao final do contrato: saldo devedor estimado de "
             f"{saldo_devedor_final_unit:,.2f} por veículo (prazo de financiamento de "
-            f"{p['prazo_financiamento_meses']} meses é maior que o prazo contratual de {prazo_meses} meses)."
+            f"{prazo_financiamento_meses} meses é maior que o prazo contratual de {prazo_meses} meses)."
             .replace(",", "§").replace(".", ",").replace("§", ".")
         )
 
@@ -174,6 +195,18 @@ def compute_lote_financials(lote: dict, veiculo_ref: dict, prazo_meses: int,
     depreciacao_mensal_unit = (preco_compra - valor_residual_unit) / prazo_meses if prazo_meses > 0 else 0.0
 
     custos_operacionais_mensal_unit = p["custos_operacionais_mensal"]
+
+    # --- Capital necessário: entrada (se houver) + capital de giro (reserva de
+    # caixa para cobrir os primeiros meses de custo operacional antes da fatura
+    # do órgão entrar) — com entrada 0% (100% financiado), o capital de giro
+    # passa a ser o número que realmente importa pra decisão de GO/NO GO.
+    entrada_total = preco_compra * p["entrada_pct"] * quantidade
+    custo_operacional_mensal_unit_sem_financeiro = (
+        seguro_mensal_unit + manutencao_mensal_unit + pneus_mensal_unit
+        + administracao_mensal_unit + custos_operacionais_mensal_unit
+    )
+    capital_giro_sugerido = custo_operacional_mensal_unit_sem_financeiro * quantidade * p["meses_capital_giro"]
+    capital_necessario = round(entrada_total + capital_giro_sugerido, 2)
 
     tributos_total = tributos_mensal_unit * quantidade * prazo_meses
     seguro_total = seguro_mensal_unit * quantidade * prazo_meses
@@ -240,6 +273,7 @@ def compute_lote_financials(lote: dict, veiculo_ref: dict, prazo_meses: int,
             "manutencao_mensal_aplicada": round(manutencao_mensal_unit, 2),
             "pneus_mensal_aplicado": round(pneus_mensal_unit, 2),
             "valor_residual_pct_aplicado": residual_pct_efetivo,
+            "prazo_financiamento_meses": prazo_financiamento_meses,
         },
         "dre": {
             "receita_bruta": round(receita_bruta_total, 2),
@@ -255,6 +289,9 @@ def compute_lote_financials(lote: dict, veiculo_ref: dict, prazo_meses: int,
         },
         "preco_compra_unitario": round(preco_compra, 2),
         "capital_necessario": round(capital_necessario, 2),
+        "entrada_total": round(entrada_total, 2),
+        "capital_giro_sugerido": round(capital_giro_sugerido, 2),
+        "prazo_financiamento_meses_aplicado": prazo_financiamento_meses,
         "receita_mensal_unitaria": round(receita_mensal_unit, 2),
         "receita_estimada": round(receita_bruta_total, 2),
         "custo_total": round(receita_bruta_total - lucro_operacional_total, 2),
@@ -272,6 +309,19 @@ def compute_lote_financials(lote: dict, veiculo_ref: dict, prazo_meses: int,
         "risco": risco,
         "avisos": avisos,
     }
+
+
+def compute_cenarios_lote(lote: dict, veiculo_ref: dict, prazo_meses: int) -> list:
+    """Quando o edital não tem receita/locação explícita, calcula 3 cenários
+    (5%/6%/7% da FIPE 0km ao mês) lado a lado, em vez de um único chute."""
+    cenarios = []
+    for c in CENARIOS_RECEITA_FIPE_PCT:
+        fin = compute_lote_financials(
+            lote, veiculo_ref, prazo_meses, valor_lote_estimado=0, valor_explicito=False,
+            params={"receita_pct_fipe_am": c["pct"]},
+        )
+        cenarios.append({"pct": c["pct"], "label": c["label"], "financeiro": fin})
+    return cenarios
 
 
 def compute_consolidado(lotes_financeiro: list) -> dict:

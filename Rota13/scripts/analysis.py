@@ -43,11 +43,16 @@ def build_analise(arquivo_pdf: str, paginas: list, dados: dict, conn) -> dict:
         fin = financial.compute_lote_financials(
             lote, veiculo_ref, prazo_meses, valor_lote_estimado, valor_explicito
         )
+        # fin já usa o cenário "Moderado" (6% da FIPE/mês) como padrão quando o
+        # edital não informa receita — aqui calculamos os outros 2 cenários
+        # (5%/7%) só para exibição lado a lado, nunca escondendo a incerteza.
+        cenarios_receita = None if valor_explicito else financial.compute_cenarios_lote(lote, veiculo_ref, prazo_meses)
 
         lote_resultado = {
             **lote,
             "veiculo_referencia": veiculo_ref,
             "financeiro": fin,
+            "cenarios_receita": cenarios_receita,
             "alertas": _alertas_lote(lote, fin, prazo_meses),
             "pendencias": _pendencias_lote(lote),
         }

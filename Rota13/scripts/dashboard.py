@@ -134,6 +134,24 @@ def _svg_barras_lote(fin: dict) -> str:
     return "".join(linhas)
 
 
+def _tabela_cenarios(cenarios: list) -> str:
+    if not cenarios:
+        return ""
+    linhas = "".join(
+        f'''<div class="cenario-col">
+          <div class="cenario-pct">{c["pct"]*100:.0f}% <span class="cenario-label">{c["label"]}</span></div>
+          <div class="cenario-item"><span>Receita/mês (unid.)</span><b>{_brl(c["financeiro"]["receita_mensal_unitaria"])}</b></div>
+          <div class="cenario-item"><span>Margem</span><b>{_indicador(c["financeiro"]["margem_estimada"], _pct, [], "margem")}</b></div>
+          <div class="cenario-item"><span>ROI</span><b>{_indicador(c["financeiro"]["roi"], _pct, [], "roi")}</b></div>
+        </div>'''
+        for c in cenarios
+    )
+    return f'''<div class="cenarios-box">
+      <div class="cenarios-titulo">⚠️ Edital sem valor de locação explícito — 3 cenários estimados a partir da FIPE 0km (edite no Simulador):</div>
+      <div class="cenarios-grid">{linhas}</div>
+    </div>'''
+
+
 def _card_lote(lote: dict, prazo_meses: int) -> str:
     fin = lote["financeiro"]
     dp = lote["decisao_participar"]
@@ -172,6 +190,7 @@ def _card_lote(lote: dict, prazo_meses: int) -> str:
         <div class="stat"><span class="stat-label">TIR anual</span><span class="stat-value small">{tir_txt}</span></div>
       </div>
       <div class="bar-chart">{_svg_barras_lote(fin)}</div>
+      {_tabela_cenarios(lote.get("cenarios_receita"))}
       <div class="lote-lists">
         <div><strong>Por que "{dp["decisao"]}"?</strong><ul>{motivos_html}</ul></div>
         <div><strong>Alertas</strong><ul>{alertas_html}</ul>
@@ -463,6 +482,14 @@ _TEMPLATE = r"""<!DOCTYPE html>
   .bar-fill.ok{background:var(--ok)} .bar-fill.warn{background:var(--warn)} .bar-fill.bad{background:var(--bad)}
   .lote-lists{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;font-size:13px}
   @media(max-width:600px){.lote-lists{grid-template-columns:1fr}}
+  .cenarios-box{background:var(--warn-bg);border:1px solid var(--warn);border-radius:10px;padding:12px;margin-top:12px}
+  .cenarios-titulo{font-size:12px;color:var(--warn);margin-bottom:10px;font-weight:600}
+  .cenarios-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .cenario-col{background:var(--bg-card);border-radius:8px;padding:10px;font-size:12px}
+  .cenario-pct{font-weight:800;margin-bottom:6px}
+  .cenario-label{font-weight:400;color:var(--text-dim);font-size:11px}
+  .cenario-item{display:flex;justify-content:space-between;padding:2px 0;color:var(--text-dim)}
+  .cenario-item b{color:var(--text)}
   .doc-card{background:var(--bg-card-hover);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px}
   .doc-card h4{margin:0 0 6px;font-size:14px}
   .doc-card p{margin:4px 0;font-size:13px;color:var(--text-dim)}
@@ -683,6 +710,8 @@ _TEMPLATE = r"""<!DOCTYPE html>
           <label>Lote simulado</label>
           <select id="sim-lote">__LOTE_OPTIONS__</select>
         </div>
+        <div class="sim-field"><label>Receita mensal (% da FIPE cheia) <span id="v-receitapct"></span></label>
+          <input type="range" id="p-receitapct" min="0.02" max="0.12" step="0.001"></div>
         <div class="sim-field"><label>Desconto da montadora <span id="v-desconto"></span></label>
           <input type="range" id="p-desconto" min="0" max="0.40" step="0.01"></div>
         <div class="sim-field"><label>Entrada <span id="v-entrada"></span></label>
@@ -793,9 +822,9 @@ function calcularLote(lote, params){
   const prazoMeses = ANALISE.simulacao_base.prazo_contratual_meses;
 
   const precoCompra = fipe * (1 - params.desconto);
-  const capitalNecessario = precoCompra * params.entrada * quantidade;
+  const entradaTotal = precoCompra * params.entrada * quantidade;
 
-  const receitaMensalUnit = lote.financeiro.receita_mensal_unitaria;
+  const receitaMensalUnit = params.receitaPctFipe * fipe;  // sobre 100% da FIPE, sem desconto
   const receitaBrutaTotal = receitaMensalUnit * quantidade * prazoMeses;
 
   const tributosMensalUnit = receitaMensalUnit * params.tributos;
@@ -818,6 +847,11 @@ function calcularLote(lote, params){
   const financeiroTotal = jurosTotalUnit * quantidade;
   const depreciacaoTotal = depreciacaoMensalUnit * quantidade * prazoMeses;
   const custosOpTotal = params.custosop * quantidade * prazoMeses;
+
+  const custoOperacionalMensalUnitSemFinanceiro = seguroMensalUnit + params.manutencao + params.pneus
+    + administracaoMensalUnit + params.custosop;
+  const capitalGiroSugerido = custoOperacionalMensalUnitSemFinanceiro * quantidade * params.mesesCapitalGiro;
+  const capitalNecessario = entradaTotal + capitalGiroSugerido;
 
   const lucroOperacional = receitaBrutaTotal - tributosTotal - seguroTotal - manutencaoTotal
     - pneusTotal - administracaoTotal - financeiroTotal - depreciacaoTotal - custosOpTotal;
@@ -850,6 +884,7 @@ function calcularLote(lote, params){
 
 const els = {
   lote: document.getElementById('sim-lote'),
+  receitapct: document.getElementById('p-receitapct'), vReceitapct: document.getElementById('v-receitapct'),
   desconto: document.getElementById('p-desconto'), vDesconto: document.getElementById('v-desconto'),
   entrada: document.getElementById('p-entrada'), vEntrada: document.getElementById('v-entrada'),
   juros: document.getElementById('p-juros'), vJuros: document.getElementById('v-juros'),
@@ -866,16 +901,22 @@ const els = {
 function paramsParaLote(lote){
   const p = ANALISE.simulacao_base.parametros_padrao;
   const premissas = lote.financeiro.premissas;
+  const fipe = (lote.veiculo_referencia && lote.veiculo_referencia.fipe) || 80000;
+  // Sempre editável: se o edital tinha valor explícito, a % inicial é a taxa
+  // implícita nesse valor sobre 100% da FIPE; se não tinha, começa no cenário Moderado (6%).
+  const receitaPctFipe = fipe>0 ? (lote.financeiro.receita_mensal_unitaria / fipe) : p.receita_pct_fipe_am;
   return {
     desconto: p.desconto_montadora, entrada: p.entrada_pct, juros: p.taxa_juros_am,
-    prazofin: p.prazo_financiamento_meses, seguro: p.seguro_pct_am,
+    prazofin: premissas.prazo_financiamento_meses, seguro: p.seguro_pct_am,
     manutencao: premissas.manutencao_mensal_aplicada, pneus: premissas.pneus_mensal_aplicado,
     tributos: p.tributos_pct, administracao: p.administracao_pct,
-    custosop: p.custos_operacionais_mensal, residual: premissas.valor_residual_pct_aplicado
+    custosop: p.custos_operacionais_mensal, residual: premissas.valor_residual_pct_aplicado,
+    receitaPctFipe: receitaPctFipe, mesesCapitalGiro: p.meses_capital_giro
   };
 }
 
 function setSliders(p){
+  els.receitapct.value=p.receitaPctFipe;
   els.desconto.value=p.desconto; els.entrada.value=p.entrada; els.juros.value=p.juros;
   els.prazofin.value=p.prazofin; els.seguro.value=p.seguro; els.manutencao.value=p.manutencao;
   els.pneus.value=p.pneus; els.tributos.value=p.tributos; els.administracao.value=p.administracao;
@@ -884,16 +925,18 @@ function setSliders(p){
 
 function lerParams(){
   return {
+    receitaPctFipe: parseFloat(els.receitapct.value),
     desconto: parseFloat(els.desconto.value), entrada: parseFloat(els.entrada.value),
     juros: parseFloat(els.juros.value), prazofin: parseInt(els.prazofin.value),
     seguro: parseFloat(els.seguro.value), manutencao: parseFloat(els.manutencao.value),
     pneus: parseFloat(els.pneus.value), tributos: parseFloat(els.tributos.value),
     administracao: parseFloat(els.administracao.value), custosop: parseFloat(els.custosop.value),
-    residual: parseFloat(els.residual.value)
+    residual: parseFloat(els.residual.value), mesesCapitalGiro: ANALISE.simulacao_base.parametros_padrao.meses_capital_giro
   };
 }
 
 function atualizarLabels(p){
+  els.vReceitapct.textContent=pct(p.receitaPctFipe);
   els.vDesconto.textContent=pct(p.desconto); els.vEntrada.textContent=pct(p.entrada);
   els.vJuros.textContent=pct(p.juros); els.vPrazofin.textContent=p.prazofin+' meses';
   els.vSeguro.textContent=pct(p.seguro); els.vManutencao.textContent=brl(p.manutencao);
@@ -918,7 +961,7 @@ function recalcular(){
   document.getElementById('r-vpl').textContent = brl(res.vpl);
 }
 
-['desconto','entrada','juros','prazofin','seguro','manutencao','pneus','tributos','administracao','custosop','residual'].forEach(k=>{
+['receitapct','desconto','entrada','juros','prazofin','seguro','manutencao','pneus','tributos','administracao','custosop','residual'].forEach(k=>{
   els[k].addEventListener('input', recalcular);
 });
 els.lote.addEventListener('change', () => {
